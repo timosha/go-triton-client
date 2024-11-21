@@ -1,10 +1,12 @@
 package base
 
 import (
+	"context"
 	"crypto/tls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"time"
 )
 
 // GrpcClient interface defines a method to retrieve a gRPC client connection.
@@ -19,7 +21,10 @@ type grpcClient struct {
 
 // NewGrpcClient creates a new gRPC client connection with the given parameters.
 func NewGrpcClient(url string, connectionTimeout float64, networkTimeout float64, ssl bool, insecureConnection bool) (GrpcClient, error) {
+	// Prepare dial options
 	var opts []grpc.DialOption
+
+	// Add SSL/TLS credentials
 	if ssl {
 		var creds credentials.TransportCredentials
 		if insecureConnection {
@@ -32,7 +37,23 @@ func NewGrpcClient(url string, connectionTimeout float64, networkTimeout float64
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	grpcConnection, err := grpc.Dial(url, opts...)
+	// Add connection timeout
+	if connectionTimeout > 0 {
+		opts = append(opts, grpc.WithConnectParams(grpc.ConnectParams{
+			MinConnectTimeout: time.Duration(connectionTimeout * float64(time.Second)),
+		}))
+	}
+
+	// Prepare context with network timeout
+	ctx := context.Background()
+	if networkTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(networkTimeout*float64(time.Second)))
+		defer cancel()
+	}
+
+	// Create gRPC client
+	grpcConnection, err := grpc.NewClient(url, opts...)
 	if err != nil {
 		return nil, err
 	}

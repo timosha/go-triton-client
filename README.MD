@@ -69,8 +69,8 @@ func createHTTPClient() {
     client, err := http.NewClient(
         "triton-server.example.com", // Triton HTTP endpoint (without scheme)
         false,                       // verbose logging
-        3000,                      // connection timeout in ms
-        3000,                      // network timeout in ms
+        3000,                      // connection timeout in second
+        3000,                      // network timeout in second
         true,                        // use SSL
         true,                        // insecure connection
         nil,                         // custom HTTP client (optional)
@@ -94,8 +94,8 @@ func createGRPCClient() {
     client, err := grpc.NewClient(
         "triton-server.example.com:8001", // Triton gRPC endpoint
         false,                            // verbose logging
-        3000,                           // connection timeout in ms
-        3000,                           // network timeout in ms
+        3,                           // connection timeout in second
+        3,                           // network timeout in second
         true,                             // use SSL
         true,                             // insecure connection
         nil,                              // existing gRPC connection (optional)

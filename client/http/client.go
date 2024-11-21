@@ -45,7 +45,7 @@ func NewClient(url string, verbose bool, connectionTimeout float64, networkTimeo
 
 	if httpClient == nil {
 		httpClient = &http.Client{
-			Timeout: time.Duration(connectionTimeout) * time.Millisecond,
+			Timeout: time.Duration(connectionTimeout) * time.Second,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
 			},
