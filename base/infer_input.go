@@ -77,7 +77,7 @@ func (input *BaseInferInput) SetShape(shape []int64) {
 
 func (input *BaseInferInput) SetData(inputTensor any, binaryData bool) error {
 	// Validate the input tensor type matches the expected datatype
-	if input.Datatype != GetDatatype(inputTensor) {
+	if input.Datatype != GetDatatype(inputTensor) && input.Datatype != "FP16" {
 		return fmt.Errorf("got unexpected datatype %T from input tensor, expected %s", inputTensor, input.Datatype)
 	}
 
