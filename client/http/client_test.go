@@ -13,7 +13,7 @@ import (
 	"github.com/Trendyol/go-triton-client/mocks"
 	"github.com/Trendyol/go-triton-client/models"
 	"github.com/Trendyol/go-triton-client/options"
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"io"
 	"log"
 	"net/http"
@@ -573,7 +573,7 @@ func TestInfer(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	if len(outputData.GetData()) != 1 || outputData.GetData()[0].(float64) != 1.0 {
+	if len(outputData.GetData()) != 1 || outputData.GetData()[0].(float32) != 1.0 {
 		t.Errorf("Expected output data to be [1.0], got %v", outputData.GetData())
 	}
 }
@@ -1044,10 +1044,10 @@ func TestLoadModel_WithConfigAndFiles(t *testing.T) {
 	}
 	mockHttpClient.EXPECT().Post(gomock.Any(), requestURI, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
 		func(baseURL, uri, body string, headers, params map[string]string) (*http.Response, error) {
-			var loadRequest map[string]interface{}
+			var loadRequest map[string]any
 			json.Unmarshal([]byte(body), &loadRequest)
-			if (loadRequest["parameters"].(map[string]interface{})["file1"]).(string) != base64.StdEncoding.EncodeToString([]byte("content1")) {
-				t.Errorf("Expected %v, got %v", base64.StdEncoding.EncodeToString([]byte("content1")), (loadRequest["parameters"].(map[string]interface{})["file1"]).(string))
+			if (loadRequest["parameters"].(map[string]any)["file1"]).(string) != base64.StdEncoding.EncodeToString([]byte("content1")) {
+				t.Errorf("Expected %v, got %v", base64.StdEncoding.EncodeToString([]byte("content1")), (loadRequest["parameters"].(map[string]any)["file1"]).(string))
 			}
 			return mockResponse, nil
 		})

@@ -30,7 +30,7 @@ func TestNewRequestWrapper(t *testing.T) {
 	*requestCompressionAlgorithm = "gzip"
 	responseCompressionAlgorithm := new(string)
 	*responseCompressionAlgorithm = "deflate"
-	parameters := map[string]interface{}{"custom_param": "value"}
+	parameters := map[string]any{"custom_param": "value"}
 	opts := &options.InferOptions{
 		Headers:                      nil,
 		QueryParams:                  nil,
@@ -130,7 +130,7 @@ func TestPrepareRequest_Success(t *testing.T) {
 }
 
 func TestPrepareRequest_Error(t *testing.T) {
-	parameters := map[string]interface{}{
+	parameters := map[string]any{
 		"sequence_id": 123,
 	}
 	wrapper := NewRequestWrapper(
@@ -278,7 +278,7 @@ func TestAddCustomParameters_SupportedTypes(t *testing.T) {
 		nil,
 		converter.NewDataConverter(),
 		&options.InferOptions{
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"string_param": "value",
 				"bool_param":   true,
 				"int_param":    int(42),
@@ -321,7 +321,7 @@ func TestAddCustomParameters_UnsupportedType(t *testing.T) {
 		nil,
 		converter.NewDataConverter(),
 		&options.InferOptions{
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"custom_param": []int{1, 2, 3},
 			},
 		},
@@ -343,7 +343,7 @@ func TestAddCustomParameters_ReservedKey(t *testing.T) {
 			nil,
 			converter.NewDataConverter(),
 			&options.InferOptions{
-				Parameters: map[string]interface{}{
+				Parameters: map[string]any{
 					key: 123,
 				},
 			},

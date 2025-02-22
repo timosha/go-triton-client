@@ -9,8 +9,8 @@ import (
 	"github.com/Trendyol/go-triton-client/mocks"
 	"github.com/Trendyol/go-triton-client/models"
 	"github.com/Trendyol/go-triton-client/options"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"log"
 	"testing"
 )
@@ -1009,7 +1009,7 @@ func TestInfer_PrepareRequestError(t *testing.T) {
 		invalidInputs,
 		outputs,
 		&options.InferOptions{
-			Parameters: map[string]interface{}{"test": complex(1, 2)},
+			Parameters: map[string]any{"test": complex(1, 2)},
 		},
 	)
 

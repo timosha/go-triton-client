@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"github.com/Trendyol/go-triton-client/base"
 	"github.com/Trendyol/go-triton-client/client/grpc"
-	"github.com/Trendyol/go-triton-client/parser"
-	"github.com/Trendyol/go-triton-client/postprocess"
+	"github.com/Trendyol/go-triton-client/converter"
 	"log"
 )
 
@@ -18,7 +17,7 @@ func performGRPCInference(tritonClient base.Client) {
 	}
 
 	outputs := []base.InferOutput{
-		grpc.NewInferOutput("output_name", map[string]interface{}{"binary_data": true}),
+		grpc.NewInferOutput("output_name", map[string]any{"binary_data": true}),
 	}
 
 	response, err := tritonClient.Infer(
@@ -34,19 +33,17 @@ func performGRPCInference(tritonClient base.Client) {
 	}
 
 	// Process response
-	sliceResp, err := response.AsSlice("output_name")
+	sliceResp, err := response.AsFloat32Slice("output_name")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Parse the response
-	parsedData, ok := parser.ParseSlice[[][]float64](sliceResp)
-	if !ok {
-		log.Fatal("Failed to parse inference response")
+	output, _ := response.GetOutput("logits")
+
+	embeddings, err := converter.Reshape3D[float32](sliceResp, output.GetShape())
+	if err != nil {
+		log.Fatal("Failed to reshape inference response")
 	}
 
-	// Post-process if needed
-	postprocessManager := postprocess.NewPostprocessManager()
-	processedData := postprocessManager.Float64ToFloat32Slice2D(parsedData)
-	fmt.Println(processedData)
+	fmt.Println(embeddings)
 }

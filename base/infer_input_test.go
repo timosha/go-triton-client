@@ -3,7 +3,7 @@ package base
 import (
 	"errors"
 	"github.com/Trendyol/go-triton-client/mocks"
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"reflect"
 	"testing"
 )
@@ -31,7 +31,7 @@ func TestBaseInferInput_GetDatatype(t *testing.T) {
 }
 
 func TestBaseInferInput_GetParameters(t *testing.T) {
-	parameters := map[string]interface{}{"param1": "value1"}
+	parameters := map[string]any{"param1": "value1"}
 	input := &BaseInferInput{Parameters: parameters}
 	if !reflect.DeepEqual(input.GetParameters(), parameters) {
 		t.Errorf("Expected Parameters %v, got %v", parameters, input.GetParameters())
@@ -39,7 +39,7 @@ func TestBaseInferInput_GetParameters(t *testing.T) {
 }
 
 func TestBaseInferInput_GetData(t *testing.T) {
-	data := []interface{}{1, 2, 3}
+	data := []any{1, 2, 3}
 	input := &BaseInferInput{Data: data}
 	if !reflect.DeepEqual(input.GetData(), data) {
 		t.Errorf("Expected Data %v, got %v", data, input.GetData())
@@ -63,7 +63,7 @@ func TestBaseInferInput_SetData(t *testing.T) {
 	dataConverter.EXPECT().SerializeTensor(gomock.Any()).Return([]uint8{1, 2, 3}, nil)
 	input := &BaseInferInput{
 		Datatype:      datatype,
-		Parameters:    map[string]interface{}{"binary_data_size": 100},
+		Parameters:    map[string]any{"binary_data_size": 100},
 		DataConverter: dataConverter,
 	}
 	err := input.SetData(inputTensor, true)
@@ -88,10 +88,10 @@ func TestBaseInferInput_SetData_NonBinaryData(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	dataConverter := mocks.NewMockDataConverter(mockController)
-	dataConverter.EXPECT().FlattenData(gomock.Any()).Return([]interface{}{int32(1), int32(2), int32(3)})
+	dataConverter.EXPECT().FlattenData(gomock.Any()).Return([]any{int32(1), int32(2), int32(3)})
 	input := &BaseInferInput{
 		Datatype:      datatype,
-		Parameters:    map[string]interface{}{"binary_data_size": 100},
+		Parameters:    map[string]any{"binary_data_size": 100},
 		DataConverter: dataConverter,
 	}
 	err := input.SetData(inputTensor, false)
@@ -104,7 +104,7 @@ func TestBaseInferInput_SetData_NonBinaryData(t *testing.T) {
 	if input.RawData != nil {
 		t.Errorf("Expected RawData to be nil, got %v", input.RawData)
 	}
-	expectedData := []interface{}{int32(1), int32(2), int32(3)}
+	expectedData := []any{int32(1), int32(2), int32(3)}
 	if !reflect.DeepEqual(input.Data, expectedData) {
 		t.Errorf("Expected Data %v, got %v", expectedData, input.Data)
 	}
@@ -119,7 +119,7 @@ func TestBaseInferInput_SetData_BinaryData(t *testing.T) {
 	dataConverter.EXPECT().SerializeTensor(gomock.Any()).Return([]byte{1, 2, 3, 4}, nil)
 	input := &BaseInferInput{
 		Datatype:      datatype,
-		Parameters:    make(map[string]interface{}),
+		Parameters:    make(map[string]any),
 		DataConverter: dataConverter,
 	}
 	err := input.SetData(inputTensor, true)
@@ -146,7 +146,7 @@ func TestBaseInferInput_SetData_InvalidDatatype(t *testing.T) {
 	dataConverter := mocks.NewMockDataConverter(mockController)
 	input := &BaseInferInput{
 		Datatype:      datatype,
-		Parameters:    make(map[string]interface{}),
+		Parameters:    make(map[string]any),
 		DataConverter: dataConverter,
 	}
 	err := input.SetData(inputTensor, false)
@@ -164,7 +164,7 @@ func TestBaseInferInput_SetData_SerializeError(t *testing.T) {
 	dataConverter.EXPECT().SerializeTensor(gomock.Any()).Return(nil, errors.New("error while SerializeTensor"))
 	input := &BaseInferInput{
 		Datatype:      datatype,
-		Parameters:    make(map[string]interface{}),
+		Parameters:    make(map[string]any),
 		DataConverter: dataConverter,
 	}
 	err := input.SetData(inputTensor, true)
@@ -175,10 +175,11 @@ func TestBaseInferInput_SetData_SerializeError(t *testing.T) {
 
 func TestGetDatatype(t *testing.T) {
 	tests := []struct {
-		input    interface{}
+		input    any
 		expected string
 	}{
-		{[]int{1, 2}, "INT64"},
+		{[]int8{1, 2}, "INT8"},
+		{[]int16{int16(1), int16(1)}, "INT16"},
 		{[]int32{1, 2}, "INT32"},
 		{[]int64{1, 2}, "INT64"},
 		{[]uint16{1, 2}, "UINT16"},
@@ -189,10 +190,10 @@ func TestGetDatatype(t *testing.T) {
 		{[]byte{1, 2}, "BYTES"},
 		{[]bool{true, false}, "BOOL"},
 		{[]string{"a", "b"}, "BYTES"},
-		{[]complex64{1 + 2i}, "UNKNOWN"},
+		{[]any{1 + 2i}, "UNKNOWN"},
 	}
 	for _, tt := range tests {
-		datatype := getDatatype(tt.input)
+		datatype := GetDatatype(tt.input)
 		if datatype != tt.expected {
 			t.Errorf("getDatatype(%T) = %s, expected %s", tt.input, datatype, tt.expected)
 		}

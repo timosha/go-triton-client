@@ -1,7 +1,9 @@
 package base
 
 import (
+	"encoding/json"
 	"errors"
+	"github.com/Trendyol/go-triton-client/converter"
 )
 
 // InferOutputs holds model name, version, and output details.
@@ -13,49 +15,94 @@ type InferOutputs struct {
 
 // InferOutput interface defines methods for output data.
 type InferOutput interface {
+	// GetName returns the output name.
 	GetName() string
-	GetShape() []int
+	// GetShape returns the output shape.
+	GetShape() []int64
+	// GetDatatype returns the datatype of the output.
 	GetDatatype() string
-	GetParameters() map[string]interface{}
-	GetData() []interface{}
+	// GetParameters returns the parameters of the output.
+	GetParameters() map[string]any
+	// GetData returns the data of the output.
+	GetData() []any
 	GetTensor() any
 }
 
 // BaseInferOutput represents basic output properties.
 type BaseInferOutput struct {
 	Name       string
-	Shape      []int
+	Shape      []int64
 	Datatype   string
-	Parameters map[string]interface{}
-	Data       []interface{}
+	Parameters map[string]any
+	Data       []any
 }
 
-// GetName returns the output name.
+// UnmarshalJSON customizes the JSON unmarshaling for InferOutput, handling data conversion
+// for different datatypes such as FP32, INT32, BOOL, etc.
+func (output *BaseInferOutput) UnmarshalJSON(data []byte) error {
+	var tempStruct struct {
+		Name           string         `json:"name"`
+		Shape          []int64        `json:"shape"`
+		Datatype       string         `json:"datatype"`
+		Parameters     map[string]any `json:"parameters"`
+		Data           []any          `json:"data"`
+		Classification int            `json:"classification"`
+	}
+	if err := json.Unmarshal(data, &tempStruct); err != nil {
+		return err
+	}
+	output.Name = tempStruct.Name
+	output.Shape = tempStruct.Shape
+	output.Datatype = tempStruct.Datatype
+	output.Parameters = tempStruct.Parameters
+	dataConverter := converter.NewDataConverter()
+	switch tempStruct.Datatype {
+	case "FP32":
+		output.Data = dataConverter.ConvertInterfaceSliceToFloat32SliceAsInterface(tempStruct.Data)
+	case "FP64":
+		output.Data = dataConverter.ConvertInterfaceSliceToFloat64SliceAsInterface(tempStruct.Data)
+	case "INT32":
+		output.Data = dataConverter.ConvertInterfaceSliceToInt32SliceAsInterface(tempStruct.Data)
+	case "INT64":
+		output.Data = dataConverter.ConvertInterfaceSliceToInt64SliceAsInterface(tempStruct.Data)
+	case "UINT32":
+		output.Data = dataConverter.ConvertInterfaceSliceToUint32SliceAsInterface(tempStruct.Data)
+	case "UINT64":
+		output.Data = dataConverter.ConvertInterfaceSliceToUint64SliceAsInterface(tempStruct.Data)
+	case "BOOL":
+		output.Data = dataConverter.ConvertInterfaceSliceToBoolSliceAsInterface(tempStruct.Data)
+	case "BYTES":
+		convertedData, err := dataConverter.ConvertInterfaceSliceToBytesSliceAsInterface(tempStruct.Data)
+		if err != nil {
+			return err
+		}
+		output.Data = convertedData
+	default:
+		output.Data = tempStruct.Data
+	}
+	return nil
+}
+
 func (output *BaseInferOutput) GetName() string {
 	return output.Name
 }
 
-// GetShape returns the output shape.
-func (output *BaseInferOutput) GetShape() []int {
+func (output *BaseInferOutput) GetShape() []int64 {
 	return output.Shape
 }
 
-// GetDatatype returns the datatype of the output.
 func (output *BaseInferOutput) GetDatatype() string {
 	return output.Datatype
 }
 
-// GetParameters returns the parameters of the output.
-func (output *BaseInferOutput) GetParameters() map[string]interface{} {
+func (output *BaseInferOutput) GetParameters() map[string]any {
 	return output.Parameters
 }
 
-// GetData returns the data of the output.
-func (output *BaseInferOutput) GetData() []interface{} {
+func (output *BaseInferOutput) GetData() []any {
 	return output.Data
 }
 
-// GetTensor returns an error indicating base function should not be used.
 func (output *BaseInferOutput) GetTensor() any {
 	return errors.New("do not use base GetTensor function")
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/Trendyol/go-triton-client/base"
 	"github.com/Trendyol/go-triton-client/client/http"
-	"github.com/Trendyol/go-triton-client/parser"
+	"github.com/Trendyol/go-triton-client/converter"
 	"github.com/Trendyol/go-triton-client/postprocess"
 	"log"
 )
@@ -28,7 +28,7 @@ func performHttpInference(tritonClient base.Client) {
 	}
 
 	outputs := []base.InferOutput{
-		http.NewInferOutput("logits", map[string]interface{}{"binary_data": true}),
+		http.NewInferOutput("logits", map[string]any{"binary_data": true}),
 	}
 
 	response, err := tritonClient.Infer(
@@ -42,21 +42,19 @@ func performHttpInference(tritonClient base.Client) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	sliceResp, err := response.AsSlice("logits")
+	sliceResp, err := response.AsFloat32Slice("logits")
 	if err != nil {
 		log.Fatal(err)
 	}
+	output, _ := response.GetOutput("logits")
 
-	embeddings, ok := parser.ParseSlice[[][][]float64](sliceResp)
-	if !ok {
-		log.Fatal("Failed to parse inference response")
+	embeddings, err := converter.Reshape3D[float32](sliceResp, output.GetShape())
+	if err != nil {
+		log.Fatal("Failed to reshape inference response")
 	}
 
 	postprocessManager := postprocess.NewPostprocessManager()
-	convertedEmbeddings := postprocessManager.Float64ToFloat32Slice3D(embeddings)
-
-	meanPooledEmbeddings, err := postprocessManager.MeanPoolingFloat32Slice3D(convertedEmbeddings, [][]int64{{1, 1, 1}, {1, 1, 1}})
+	meanPooledEmbeddings, err := postprocessManager.MeanPoolingFloat32Slice3D(embeddings, [][]int64{{1, 1, 1}, {1, 1, 1}})
 	if err != nil {
 		log.Fatal(err)
 	}

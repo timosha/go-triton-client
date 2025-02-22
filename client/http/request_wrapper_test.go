@@ -32,7 +32,7 @@ func TestNewRequestWrapper(t *testing.T) {
 	*requestCompressionAlgorithm = "gzip"
 	responseCompressionAlgorithm := new(string)
 	*responseCompressionAlgorithm = "deflate"
-	parameters := map[string]interface{}{"custom_param": "value"}
+	parameters := map[string]any{"custom_param": "value"}
 	opts := &options.InferOptions{
 		Headers:                      nil,
 		QueryParams:                  nil,
@@ -176,7 +176,7 @@ func TestGetInferenceRequest(t *testing.T) {
 		t.Errorf("Expected jsonSize %d, got %d", expectedSize, *jsonSize)
 	}
 
-	var inferRequest map[string]interface{}
+	var inferRequest map[string]any
 	err = json.Unmarshal(requestBody[:*jsonSize], &inferRequest)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal JSON: %v", err)
@@ -196,7 +196,7 @@ func TestGetInferenceRequestError(t *testing.T) {
 		nil,
 		marshaller.NewJSONMarshaller(),
 		&options.InferOptions{
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"sequence_id": 123,
 			},
 		},
@@ -260,7 +260,7 @@ func TestPrepareHeadersNoCompression(t *testing.T) {
 }
 
 func TestAddSequenceParameters(t *testing.T) {
-	parameters := make(map[string]interface{})
+	parameters := make(map[string]any)
 	sequenceID := 42
 	sequenceStart := true
 	sequenceEnd := false
@@ -290,7 +290,7 @@ func TestAddSequenceParameters(t *testing.T) {
 }
 
 func TestAddPriorityAndTimeout(t *testing.T) {
-	parameters := make(map[string]interface{})
+	parameters := make(map[string]any)
 	priority := 1
 	timeout := 1000
 	wrapper := NewRequestWrapper(
@@ -315,7 +315,7 @@ func TestAddPriorityAndTimeout(t *testing.T) {
 }
 
 func TestAddCustomParameters(t *testing.T) {
-	parameters := make(map[string]interface{})
+	parameters := make(map[string]any)
 	wrapper := NewRequestWrapper(
 		"",
 		"",
@@ -324,7 +324,7 @@ func TestAddCustomParameters(t *testing.T) {
 		nil,
 		marshaller.NewJSONMarshaller(),
 		&options.InferOptions{
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"custom_param": "value",
 			},
 		},
@@ -341,7 +341,7 @@ func TestAddCustomParameters(t *testing.T) {
 func TestAddCustomParametersReservedKey(t *testing.T) {
 	reservedKeys := []string{"sequence_id", "sequence_start", "sequence_end", "priority", "binary_data_output"}
 	for _, key := range reservedKeys {
-		parameters := make(map[string]interface{})
+		parameters := make(map[string]any)
 		wrapper := NewRequestWrapper(
 			"",
 			"",
@@ -350,7 +350,7 @@ func TestAddCustomParametersReservedKey(t *testing.T) {
 			nil,
 			marshaller.NewJSONMarshaller(),
 			&options.InferOptions{
-				Parameters: map[string]interface{}{
+				Parameters: map[string]any{
 					key: 123,
 				},
 			},
@@ -363,7 +363,7 @@ func TestAddCustomParametersReservedKey(t *testing.T) {
 }
 
 func TestConvertInputsToTensors(t *testing.T) {
-	input := NewInferInput("input0", "FP32", []int64{1, 3}, map[string]interface{}{"test": "test"})
+	input := NewInferInput("input0", "FP32", []int64{1, 3}, map[string]any{"test": "test"})
 	wrapper := NewRequestWrapper(
 		"",
 		"",
@@ -377,11 +377,11 @@ func TestConvertInputsToTensors(t *testing.T) {
 	if len(tensors) != 1 {
 		t.Errorf("Expected 1 tensor, got %d", len(tensors))
 	}
-	expectedTensor := map[string]interface{}{
+	expectedTensor := map[string]any{
 		"name":       "input0",
 		"shape":      []int64{1, 3},
 		"datatype":   "FP32",
-		"parameters": map[string]interface{}{"test": "test"},
+		"parameters": map[string]any{"test": "test"},
 	}
 	if !reflect.DeepEqual(tensors[0], expectedTensor) {
 		t.Errorf("Expected tensor %v, got %v", expectedTensor, tensors[0])
@@ -403,9 +403,9 @@ func TestConvertOutputsToTensors(t *testing.T) {
 	if len(tensors) != 1 {
 		t.Errorf("Expected 1 tensor, got %d", len(tensors))
 	}
-	expectedTensor := map[string]interface{}{
+	expectedTensor := map[string]any{
 		"name":       "output0",
-		"parameters": map[string]interface{}{},
+		"parameters": map[string]any{},
 	}
 	if !reflect.DeepEqual(tensors[0], expectedTensor) {
 		t.Errorf("Expected tensor %v, got %v", expectedTensor, tensors[0])
@@ -448,13 +448,13 @@ func TestGetInferenceRequestNoInputs(t *testing.T) {
 		t.Error("Expected jsonSize to be non-nil")
 	}
 
-	var inferRequest map[string]interface{}
+	var inferRequest map[string]any
 	err = json.Unmarshal(requestBody, &inferRequest)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
 
-	if inputs, ok := inferRequest["inputs"]; !ok || len(inputs.([]interface{})) != 0 {
+	if inputs, ok := inferRequest["inputs"]; !ok || len(inputs.([]any)) != 0 {
 		t.Errorf("Expected 'inputs' to be empty, got %v", inputs)
 	}
 }
@@ -488,13 +488,13 @@ func TestGetInferenceRequestWithOutputs(t *testing.T) {
 		t.Errorf("Expected jsonSize %d, got %d", expectedSize, *jsonSize)
 	}
 
-	var inferRequest map[string]interface{}
+	var inferRequest map[string]any
 	err = json.Unmarshal(requestBody[:*jsonSize], &inferRequest)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
 
-	if outputs, ok := inferRequest["outputs"]; !ok || len(outputs.([]interface{})) != 1 {
+	if outputs, ok := inferRequest["outputs"]; !ok || len(outputs.([]any)) != 1 {
 		t.Errorf("Expected 'outputs' with 1 item, got %v", outputs)
 	}
 }
@@ -508,7 +508,7 @@ func TestPrepareRequestError(t *testing.T) {
 		nil,
 		marshaller.NewJSONMarshaller(),
 		&options.InferOptions{
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"sequence_id": 123,
 			},
 		},
@@ -600,7 +600,7 @@ func TestPrepareRequest_SetHeaders(t *testing.T) {
 	*requestCompressionAlgorithm = "gzip"
 	responseCompressionAlgorithm := new(string)
 	*responseCompressionAlgorithm = "deflate"
-	parameters := map[string]interface{}{"custom_param": "value"}
+	parameters := map[string]any{"custom_param": "value"}
 
 	opts := &options.InferOptions{
 		Headers:                      nil,
@@ -653,7 +653,7 @@ func TestGetInferenceRequest_JSONMarshalError(t *testing.T) {
 		nil,
 		marshaller.NewJSONMarshaller(),
 		&options.InferOptions{
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"invalid_param": invalidValue,
 			},
 		},

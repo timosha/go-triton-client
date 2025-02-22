@@ -191,10 +191,11 @@ func (w *RequestWrapper) addCustomParameters(parameters map[string]*grpc_generat
 // convertInputsToTensors converts the input base.InferInput instances to a format suitable for the inference request payload.
 func (w *RequestWrapper) convertInputsToTensors() ([]*grpc_generated_v2.ModelInferRequest_InferInputTensor, [][]byte) {
 	inputTensors := make([]*grpc_generated_v2.ModelInferRequest_InferInputTensor, len(w.Inputs))
-	rawInputContents := make([][]byte, 0)
+	var rawInputContents [][]byte
 	for i, input := range w.Inputs {
 		inputTensors[i] = input.GetTensor().(*grpc_generated_v2.ModelInferRequest_InferInputTensor)
 		if rawData := input.GetBinaryData(); rawData != nil {
+			rawInputContents = make([][]byte, 0, len(rawData))
 			rawInputContents = append(rawInputContents, rawData)
 		}
 	}

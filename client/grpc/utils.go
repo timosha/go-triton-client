@@ -18,8 +18,8 @@ func mapInferenceStat(stat *grpc_generated_v2.StatisticDuration) models.Inferenc
 }
 
 // mapBatchStats maps a slice of InferBatchStatistics into a slice of empty interfaces.
-func mapBatchStats(batchStats []*grpc_generated_v2.InferBatchStatistics) []interface{} {
-	result := make([]interface{}, len(batchStats))
+func mapBatchStats(batchStats []*grpc_generated_v2.InferBatchStatistics) []any {
+	result := make([]any, len(batchStats))
 	for i, bs := range batchStats {
 		result[i] = bs
 	}
@@ -27,8 +27,8 @@ func mapBatchStats(batchStats []*grpc_generated_v2.InferBatchStatistics) []inter
 }
 
 // mapMemoryUsage maps a slice of MemoryUsage into a slice of empty interfaces.
-func mapMemoryUsage(memoryUsage []*grpc_generated_v2.MemoryUsage) []interface{} {
-	result := make([]interface{}, len(memoryUsage))
+func mapMemoryUsage(memoryUsage []*grpc_generated_v2.MemoryUsage) []any {
+	result := make([]any, len(memoryUsage))
 	for i, mu := range memoryUsage {
 		result[i] = mu
 	}

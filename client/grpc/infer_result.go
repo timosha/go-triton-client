@@ -33,7 +33,7 @@ func NewInferResult(responseWrapper base.ResponseWrapper, dataConverter converte
 		modelOutput := &base.BaseInferOutput{
 			Name:     output.Name,
 			Datatype: output.Datatype,
-			Shape:    convertInt64ToInt(output.Shape),
+			Shape:    output.Shape,
 		}
 
 		outputNameToBufferMap[output.GetName()] = bufferIndex
@@ -60,32 +60,67 @@ func NewInferResult(responseWrapper base.ResponseWrapper, dataConverter converte
 	}, nil
 }
 
-// AsSlice retrieves the output tensor by name, extracts its corresponding data from the buffer,
-// deserializes it using the DataConverter, and reshapes it into the appropriate slice type.
-// It returns the reshaped slice or an error if the process fails.
-func (r *InferResult) AsSlice(name string) (interface{}, error) {
-	output, err := r.GetOutput(name)
-	if err != nil {
-		return nil, err
-	}
-
-	startIndex := r.OutputNameToBufferMap[name]
-	endIndex := startIndex + len(r.Buffer[startIndex:])
-
-	dataBuffer := r.Buffer[startIndex:endIndex]
-
-	slice, err := r.DataConverter.DeserializeTensor(output.GetDatatype(), dataBuffer)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.DataConverter.ReshapeArray(slice, output.GetShape())
+func (r *InferResult) AsInt8Slice(name string) ([]int8, error) {
+	return getAsSlice[int8](name, r, r.DataConverter.DeserializeInt8Tensor)
 }
 
-func convertInt64ToInt(int64Slice []int64) []int {
-	intSlice := make([]int, len(int64Slice))
-	for i, v := range int64Slice {
-		intSlice[i] = int(v)
+func (r *InferResult) AsInt16Slice(name string) ([]int16, error) {
+	return getAsSlice[int16](name, r, r.DataConverter.DeserializeInt16Tensor)
+}
+
+func (r *InferResult) AsInt32Slice(name string) ([]int32, error) {
+	return getAsSlice[int32](name, r, r.DataConverter.DeserializeInt32Tensor)
+}
+
+func (r *InferResult) AsInt64Slice(name string) ([]int64, error) {
+	return getAsSlice[int64](name, r, r.DataConverter.DeserializeInt64Tensor)
+}
+
+func (r *InferResult) AsUint8Slice(name string) ([]uint8, error) {
+	return getAsSlice[uint8](name, r, r.DataConverter.DeserializeUint8Tensor)
+}
+
+func (r *InferResult) AsUint16Slice(name string) ([]uint16, error) {
+	return getAsSlice[uint16](name, r, r.DataConverter.DeserializeUint16Tensor)
+}
+
+func (r *InferResult) AsUint32Slice(name string) ([]uint32, error) {
+	return getAsSlice[uint32](name, r, r.DataConverter.DeserializeUint32Tensor)
+}
+
+func (r *InferResult) AsUint64Slice(name string) ([]uint64, error) {
+	return getAsSlice[uint64](name, r, r.DataConverter.DeserializeUint64Tensor)
+}
+
+func (r *InferResult) AsFloat16Slice(name string) ([]float64, error) {
+	return getAsSlice[float64](name, r, r.DataConverter.DeserializeFloat16Tensor)
+}
+
+func (r *InferResult) AsFloat32Slice(name string) ([]float32, error) {
+	return getAsSlice[float32](name, r, r.DataConverter.DeserializeFloat32Tensor)
+}
+
+func (r *InferResult) AsFloat64Slice(name string) ([]float64, error) {
+	return getAsSlice[float64](name, r, r.DataConverter.DeserializeFloat64Tensor)
+}
+
+func (r *InferResult) AsBoolSlice(name string) ([]bool, error) {
+	return getAsSlice[bool](name, r, r.DataConverter.DeserializeBoolTensor)
+}
+
+func (r *InferResult) AsByteSlice(name string) ([]string, error) {
+	return getAsSlice[string](name, r, r.DataConverter.DeserializeBytesTensor)
+}
+
+func getAsSlice[T any](name string, inferResult *InferResult, deserializer func(buffer []byte) ([]T, error)) ([]T, error) {
+	_, err := inferResult.GetOutput(name)
+	if err != nil {
+		return nil, err
 	}
-	return intSlice
+
+	startIndex := inferResult.OutputNameToBufferMap[name]
+	endIndex := startIndex + len(inferResult.Buffer[startIndex:])
+	dataBuffer := inferResult.Buffer[startIndex:endIndex]
+
+	return deserializer(dataBuffer)
 }

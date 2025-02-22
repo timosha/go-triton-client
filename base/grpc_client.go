@@ -11,6 +11,7 @@ import (
 
 // GrpcClient interface defines a method to retrieve a gRPC client connection.
 type GrpcClient interface {
+	// GetConnection returns the gRPC connection instance stored in the grpcClient struct.
 	GetConnection() *grpc.ClientConn
 }
 
@@ -61,7 +62,6 @@ func NewGrpcClient(url string, connectionTimeout float64, networkTimeout float64
 	return &grpcClient{grpcConnection: grpcConnection}, nil
 }
 
-// GetConnection returns the gRPC connection instance stored in the grpcClient struct.
 func (g *grpcClient) GetConnection() *grpc.ClientConn {
 	return g.grpcConnection
 }

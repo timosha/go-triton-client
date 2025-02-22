@@ -86,8 +86,8 @@ func (w *RequestWrapper) PrepareRequest() (*http.Request, error) {
 // getInferenceRequest constructs the inference request payload, serializes it to JSON,
 // and appends any binary data associated with the input tensors to the request body.
 func (w *RequestWrapper) getInferenceRequest() ([]byte, *int, error) {
-	inferRequest := make(map[string]interface{})
-	parameters := make(map[string]interface{})
+	inferRequest := make(map[string]any)
+	parameters := make(map[string]any)
 
 	if w.Options.RequestID != nil && *w.Options.RequestID != "" {
 		inferRequest["id"] = *w.Options.RequestID
@@ -159,7 +159,7 @@ func (w *RequestWrapper) prepareHeaders(jsonSize *int) map[string]string {
 }
 
 // addSequenceParameters adds sequence-related parameters to the inference request if sequence details (ID, start, end) are provided.
-func (w *RequestWrapper) addSequenceParameters(parameters map[string]interface{}) {
+func (w *RequestWrapper) addSequenceParameters(parameters map[string]any) {
 	if w.Options.SequenceID != nil {
 		parameters["sequence_id"] = *w.Options.SequenceID
 		if w.Options.SequenceStart != nil {
@@ -172,7 +172,7 @@ func (w *RequestWrapper) addSequenceParameters(parameters map[string]interface{}
 }
 
 // addPriorityAndTimeout adds priority and timeout parameters to the inference request if specified.
-func (w *RequestWrapper) addPriorityAndTimeout(parameters map[string]interface{}) {
+func (w *RequestWrapper) addPriorityAndTimeout(parameters map[string]any) {
 	if w.Options.Priority != nil {
 		parameters["priority"] = *w.Options.Priority
 	}
@@ -183,7 +183,7 @@ func (w *RequestWrapper) addPriorityAndTimeout(parameters map[string]interface{}
 
 // addCustomParameters adds any custom parameters to the inference request,
 // ensuring that no reserved parameters are overwritten, and returns an error if any reserved parameters are used.
-func (w *RequestWrapper) addCustomParameters(parameters map[string]interface{}) error {
+func (w *RequestWrapper) addCustomParameters(parameters map[string]any) error {
 	for key, value := range w.Options.Parameters {
 		switch key {
 		case "sequence_id", "sequence_start", "sequence_end", "priority", "binary_data_output":
@@ -196,19 +196,19 @@ func (w *RequestWrapper) addCustomParameters(parameters map[string]interface{}) 
 }
 
 // convertInputsToTensors converts the input base.InferInput instances to a format suitable for the inference request payload.
-func (w *RequestWrapper) convertInputsToTensors() []map[string]interface{} {
-	inputTensors := make([]map[string]interface{}, len(w.Inputs))
+func (w *RequestWrapper) convertInputsToTensors() []map[string]any {
+	inputTensors := make([]map[string]any, len(w.Inputs))
 	for i, input := range w.Inputs {
-		inputTensors[i] = input.GetTensor().(map[string]interface{})
+		inputTensors[i] = input.GetTensor().(map[string]any)
 	}
 	return inputTensors
 }
 
 // convertOutputsToTensors converts the output base.InferOutput instances to a format suitable for the inference request payload.
-func (w *RequestWrapper) convertOutputsToTensors() []map[string]interface{} {
-	outputTensors := make([]map[string]interface{}, len(w.Outputs))
+func (w *RequestWrapper) convertOutputsToTensors() []map[string]any {
+	outputTensors := make([]map[string]any, len(w.Outputs))
 	for i, output := range w.Outputs {
-		outputTensors[i] = output.GetTensor().(map[string]interface{})
+		outputTensors[i] = output.GetTensor().(map[string]any)
 	}
 	return outputTensors
 }

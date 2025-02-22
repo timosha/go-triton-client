@@ -11,5 +11,5 @@ type InferOptions struct {
 	Timeout                      *int
 	RequestCompressionAlgorithm  *string
 	ResponseCompressionAlgorithm *string
-	Parameters                   map[string]interface{}
+	Parameters                   map[string]any
 }

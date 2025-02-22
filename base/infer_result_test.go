@@ -2,7 +2,8 @@ package base
 
 import (
 	"github.com/Trendyol/go-triton-client/mocks"
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
+	"reflect"
 	"testing"
 )
 
@@ -50,5 +51,40 @@ func TestBaseInferResult_GetOutput_NotFound(t *testing.T) {
 	_, err := result.GetOutput("output0")
 	if err == nil || err.Error() != "output output0 not found" {
 		t.Errorf("Expected error 'output output0 not found', got %v", err)
+	}
+}
+
+func TestBaseInferResult_GetShape(t *testing.T) {
+	result := &BaseInferResult{
+		OutputsResponse: InferOutputs{
+			Outputs: []*BaseInferOutput{
+				{Name: "output0", Shape: []int64{1, 2}},
+			},
+		},
+	}
+	expectedShape := []int64{1, 2}
+	res, err := result.GetShape("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if !reflect.DeepEqual(res, expectedShape) {
+		t.Errorf("Expected shape %v, got %v", expectedShape, res)
+	}
+}
+
+func TestBaseInferResult_GetShape_NotFound(t *testing.T) {
+	result := &BaseInferResult{
+		OutputsResponse: InferOutputs{
+			Outputs: []*BaseInferOutput{
+				{Name: "output0", Shape: []int64{1, 2}},
+			},
+		},
+	}
+	res, err := result.GetShape("output1")
+	if err == nil {
+		t.Error("Expected error, got nil", err)
+	}
+	if res != nil {
+		t.Errorf("Expected nil, got %v", res)
 	}
 }

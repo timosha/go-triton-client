@@ -11,9 +11,9 @@ type InferOutput struct {
 }
 
 // NewInferOutput creates a new instance of InferOutput with the provided name and parameters.
-func NewInferOutput(name string, parameters map[string]interface{}) base.InferOutput {
+func NewInferOutput(name string, parameters map[string]any) base.InferOutput {
 	if parameters == nil {
-		parameters = make(map[string]interface{})
+		parameters = make(map[string]any)
 	}
 	return &InferOutput{
 		BaseInferOutput: &base.BaseInferOutput{

@@ -11,9 +11,9 @@ type InferInput struct {
 }
 
 // NewInferInput creates a new HTTP InferInput instance with the given parameters.
-func NewInferInput(name string, datatype string, shape []int64, parameters map[string]interface{}) base.InferInput {
+func NewInferInput(name string, datatype string, shape []int64, parameters map[string]any) base.InferInput {
 	if parameters == nil {
-		parameters = make(map[string]interface{})
+		parameters = make(map[string]any)
 	}
 	return &InferInput{
 		BaseInferInput: &base.BaseInferInput{
@@ -26,9 +26,8 @@ func NewInferInput(name string, datatype string, shape []int64, parameters map[s
 	}
 }
 
-// GetTensor constructs the tensor representation suitable for the HTTP inference request.
 func (input *InferInput) GetTensor() any {
-	tensor := map[string]interface{}{
+	tensor := map[string]any{
 		"name":     input.Name,
 		"shape":    input.Shape,
 		"datatype": input.Datatype,

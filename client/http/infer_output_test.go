@@ -2,17 +2,15 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/Trendyol/go-triton-client/base"
-	"github.com/Trendyol/go-triton-client/mocks"
 	"reflect"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 )
 
 func TestNewInferOutput(t *testing.T) {
-	parameters := map[string]interface{}{"param1": "value1"}
+	parameters := map[string]any{"param1": "value1"}
 	output := NewInferOutput("output_name", parameters)
 	if output.GetName() != "output_name" {
 		t.Errorf("Expected name 'output_name', got '%s'", output.GetName())
@@ -33,14 +31,14 @@ func TestNewInferOutput_NilParameters(t *testing.T) {
 }
 
 func TestInferOutput_GetTensor(t *testing.T) {
-	parameters := map[string]interface{}{"param1": "value1"}
+	parameters := map[string]any{"param1": "value1"}
 	output := NewInferOutput("output_name", parameters)
-	tensor := output.GetTensor().(map[string]interface{})
+	tensor := output.GetTensor().(map[string]any)
 	if tensor["name"] != "output_name" {
 		t.Errorf("Expected tensor name 'output_name', got '%s'", tensor["name"])
 	}
-	if tensor["parameters"].(map[string]interface{})["param1"] != "value1" {
-		t.Errorf("Expected parameter 'param1' to be 'value1', got '%v'", tensor["parameters"].(map[string]interface{})["param1"])
+	if tensor["parameters"].(map[string]any)["param1"] != "value1" {
+		t.Errorf("Expected parameter 'param1' to be 'value1', got '%v'", tensor["parameters"].(map[string]any)["param1"])
 	}
 }
 
@@ -50,89 +48,176 @@ func TestInferOutput_UnmarshalJSON_AllDataTypes(t *testing.T) {
 		t.Run("Datatype_"+dtype, func(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
-			mockDataConverter := mocks.NewMockDataConverter(mockController)
 
-			jsonData := `{
+			switch dtype {
+			case "FP32":
+				jsonData := `{
 				"name": "output_name",
 				"shape": [2],
 				"datatype": "` + dtype + `",
 				"parameters": {"param1": "value1"},
 				"data": [1, 2]
 			}`
-			output := &InferOutput{
-				BaseInferOutput: &base.BaseInferOutput{},
-				DataConverter:   mockDataConverter,
-			}
-
-			switch dtype {
-			case "FP32":
-				mockDataConverter.EXPECT().ConvertInterfaceSliceToFloat32SliceAsInterface(gomock.Any()).Return([]interface{}{1.0, 2.0})
-			case "FP64":
-				mockDataConverter.EXPECT().ConvertInterfaceSliceToFloat64SliceAsInterface(gomock.Any()).Return([]interface{}{1.0, 2.0})
-			case "INT32":
-				mockDataConverter.EXPECT().ConvertInterfaceSliceToInt32SliceAsInterface(gomock.Any()).Return([]interface{}{1, 2})
-			case "INT64":
-				mockDataConverter.EXPECT().ConvertInterfaceSliceToInt64SliceAsInterface(gomock.Any()).Return([]interface{}{1, 2})
-			case "UINT32":
-				mockDataConverter.EXPECT().ConvertInterfaceSliceToUint32SliceAsInterface(gomock.Any()).Return([]interface{}{1, 2})
-			case "UINT64":
-				mockDataConverter.EXPECT().ConvertInterfaceSliceToUint64SliceAsInterface(gomock.Any()).Return([]interface{}{1, 2})
-			case "BOOL":
-				mockDataConverter.EXPECT().ConvertInterfaceSliceToBoolSliceAsInterface(gomock.Any()).Return([]interface{}{true, false})
-			case "BYTES":
-				mockDataConverter.EXPECT().ConvertInterfaceSliceToBytesSliceAsInterface(gomock.Any()).Return([]interface{}{[]byte("data1"), []byte("data2")}, nil)
-			default:
-				// No conversion for UNKNOWN type
-			}
-
-			err := json.Unmarshal([]byte(jsonData), output)
-			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-
-			switch dtype {
-			case "FP32":
-				expectedData := []interface{}{1.0, 2.0}
+				output := &InferOutput{
+					BaseInferOutput: &base.BaseInferOutput{},
+				}
+				err := json.Unmarshal([]byte(jsonData), output)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				expectedData := []any{float32(1.0), float32(2.0)}
 				if !reflect.DeepEqual(output.Data, expectedData) {
 					t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 				}
 			case "FP64":
-				expectedData := []interface{}{1.0, 2.0}
+				jsonData := `{
+				"name": "output_name",
+				"shape": [2],
+				"datatype": "` + dtype + `",
+				"parameters": {"param1": "value1"},
+				"data": [1, 2]
+			}`
+				output := &InferOutput{
+					BaseInferOutput: &base.BaseInferOutput{},
+				}
+				err := json.Unmarshal([]byte(jsonData), output)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				expectedData := []any{1.0, 2.0}
 				if !reflect.DeepEqual(output.Data, expectedData) {
 					t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 				}
 			case "INT32":
-				expectedData := []interface{}{1, 2}
+				jsonData := `{
+				"name": "output_name",
+				"shape": [2],
+				"datatype": "` + dtype + `",
+				"parameters": {"param1": "value1"},
+				"data": [1, 2]
+			}`
+				output := &InferOutput{
+					BaseInferOutput: &base.BaseInferOutput{},
+				}
+				err := json.Unmarshal([]byte(jsonData), output)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				expectedData := []any{int32(1), int32(2)}
 				if !reflect.DeepEqual(output.Data, expectedData) {
 					t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 				}
 			case "INT64":
-				expectedData := []interface{}{1, 2}
+				jsonData := `{
+				"name": "output_name",
+				"shape": [2],
+				"datatype": "` + dtype + `",
+				"parameters": {"param1": "value1"},
+				"data": [1, 2]
+			}`
+				output := &InferOutput{
+					BaseInferOutput: &base.BaseInferOutput{},
+				}
+				err := json.Unmarshal([]byte(jsonData), output)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				expectedData := []any{int64(1), int64(2)}
 				if !reflect.DeepEqual(output.Data, expectedData) {
 					t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 				}
 			case "UINT32":
-				expectedData := []interface{}{1, 2}
+				jsonData := `{
+				"name": "output_name",
+				"shape": [2],
+				"datatype": "` + dtype + `",
+				"parameters": {"param1": "value1"},
+				"data": [1, 2]
+			}`
+				output := &InferOutput{
+					BaseInferOutput: &base.BaseInferOutput{},
+				}
+				err := json.Unmarshal([]byte(jsonData), output)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				expectedData := []any{uint32(1), uint32(2)}
 				if !reflect.DeepEqual(output.Data, expectedData) {
 					t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 				}
 			case "UINT64":
-				expectedData := []interface{}{1, 2}
+				jsonData := `{
+				"name": "output_name",
+				"shape": [2],
+				"datatype": "` + dtype + `",
+				"parameters": {"param1": "value1"},
+				"data": [1, 2]
+			}`
+				output := &InferOutput{
+					BaseInferOutput: &base.BaseInferOutput{},
+				}
+				err := json.Unmarshal([]byte(jsonData), output)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				expectedData := []any{uint64(1), uint64(2)}
 				if !reflect.DeepEqual(output.Data, expectedData) {
 					t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 				}
 			case "BOOL":
-				expectedData := []interface{}{true, false}
+				jsonData := `{
+				"name": "output_name",
+				"shape": [2],
+				"datatype": "` + dtype + `",
+				"parameters": {"param1": "value1"},
+				"data": [true, false]
+			}`
+				output := &InferOutput{
+					BaseInferOutput: &base.BaseInferOutput{},
+				}
+				err := json.Unmarshal([]byte(jsonData), output)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				expectedData := []any{true, false}
 				if !reflect.DeepEqual(output.Data, expectedData) {
 					t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 				}
 			case "BYTES":
-				expectedData := []interface{}{[]byte("data1"), []byte("data2")}
+				jsonData := `{
+				"name": "output_name",
+				"shape": [1],
+				"datatype": "` + dtype + `",
+				"parameters": {"param1": "value1"},
+				"data": ["foo"]
+			}`
+				output := &InferOutput{
+					BaseInferOutput: &base.BaseInferOutput{},
+				}
+				err := json.Unmarshal([]byte(jsonData), output)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				expectedData := []any{[]byte("foo")}
 				if !reflect.DeepEqual(output.Data, expectedData) {
 					t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 				}
 			default:
-				expectedData := []interface{}{1.0, 2.0}
+				jsonData := `{
+				"name": "output_name",
+				"shape": [2],
+				"datatype": "` + dtype + `",
+				"parameters": {"param1": "value1"},
+				"data": [1, 2]
+			}`
+				output := &InferOutput{
+					BaseInferOutput: &base.BaseInferOutput{},
+				}
+				err := json.Unmarshal([]byte(jsonData), output)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				expectedData := []any{1.0, 2.0}
 				if !reflect.DeepEqual(output.Data, expectedData) {
 					t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 				}
@@ -144,35 +229,27 @@ func TestInferOutput_UnmarshalJSON_AllDataTypes(t *testing.T) {
 func TestInferOutput_UnmarshalJSON_BytesConversionError(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mockDataConverter := mocks.NewMockDataConverter(mockController)
 
 	jsonData := `{
 		"name": "output_name",
 		"shape": [2],
 		"datatype": "BYTES",
 		"parameters": {"param1": "value1"},
-		"data": ["invalid data"]
+		"data": [1,2]
 	}`
 	output := &InferOutput{
 		BaseInferOutput: &base.BaseInferOutput{},
-		DataConverter:   mockDataConverter,
 	}
-
-	mockDataConverter.EXPECT().ConvertInterfaceSliceToBytesSliceAsInterface(gomock.Any()).Return(nil, errors.New("conversion error"))
 
 	err := json.Unmarshal([]byte(jsonData), output)
 	if err == nil {
 		t.Errorf("Expected error, got nil")
-	}
-	if err.Error() != "conversion error" {
-		t.Errorf("Expected error 'conversion error', got '%v'", err)
 	}
 }
 
 func TestInferOutput_UnmarshalJSON_UnmarshalError(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mockDataConverter := mocks.NewMockDataConverter(mockController)
 
 	jsonData := `{
         "name": "output_name",
@@ -184,7 +261,6 @@ func TestInferOutput_UnmarshalJSON_UnmarshalError(t *testing.T) {
 
 	output := &InferOutput{
 		BaseInferOutput: &base.BaseInferOutput{},
-		DataConverter:   mockDataConverter,
 	}
 
 	err := json.Unmarshal([]byte(jsonData), output)
@@ -196,7 +272,6 @@ func TestInferOutput_UnmarshalJSON_UnmarshalError(t *testing.T) {
 func TestInferOutput_UnmarshalJSON_NoParameters(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mockDataConverter := mocks.NewMockDataConverter(mockController)
 
 	jsonData := `{
 		"name": "output_name",
@@ -206,10 +281,7 @@ func TestInferOutput_UnmarshalJSON_NoParameters(t *testing.T) {
 	}`
 	output := &InferOutput{
 		BaseInferOutput: &base.BaseInferOutput{},
-		DataConverter:   mockDataConverter,
 	}
-
-	mockDataConverter.EXPECT().ConvertInterfaceSliceToInt32SliceAsInterface(gomock.Any()).Return([]interface{}{1, 2})
 
 	err := json.Unmarshal([]byte(jsonData), output)
 	if err != nil {
@@ -218,7 +290,7 @@ func TestInferOutput_UnmarshalJSON_NoParameters(t *testing.T) {
 	if output.Parameters != nil {
 		t.Errorf("Expected nil parameters, got %v", output.Parameters)
 	}
-	expectedData := []interface{}{1, 2}
+	expectedData := []any{int32(1), int32(2)}
 	if !reflect.DeepEqual(output.Data, expectedData) {
 		t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 	}
@@ -227,7 +299,6 @@ func TestInferOutput_UnmarshalJSON_NoParameters(t *testing.T) {
 func TestInferOutput_UnmarshalJSON_EmptyData(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mockDataConverter := mocks.NewMockDataConverter(mockController)
 
 	jsonData := `{
 		"name": "output_name",
@@ -238,16 +309,13 @@ func TestInferOutput_UnmarshalJSON_EmptyData(t *testing.T) {
 	}`
 	output := &InferOutput{
 		BaseInferOutput: &base.BaseInferOutput{},
-		DataConverter:   mockDataConverter,
 	}
-
-	mockDataConverter.EXPECT().ConvertInterfaceSliceToInt32SliceAsInterface(gomock.Any()).Return([]interface{}{})
 
 	err := json.Unmarshal([]byte(jsonData), output)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	expectedData := []interface{}{}
+	expectedData := []any{}
 	if !reflect.DeepEqual(output.Data, expectedData) {
 		t.Errorf("Expected empty data, got %v", output.Data)
 	}
@@ -256,8 +324,6 @@ func TestInferOutput_UnmarshalJSON_EmptyData(t *testing.T) {
 func TestInferOutput_UnmarshalJSON_MissingDataField(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mockDataConverter := mocks.NewMockDataConverter(mockController)
-	mockDataConverter.EXPECT().ConvertInterfaceSliceToInt32SliceAsInterface(gomock.Any()).Return(nil)
 
 	jsonData := `{
 		"name": "output_name",
@@ -267,14 +333,13 @@ func TestInferOutput_UnmarshalJSON_MissingDataField(t *testing.T) {
 	}`
 	output := &InferOutput{
 		BaseInferOutput: &base.BaseInferOutput{},
-		DataConverter:   mockDataConverter,
 	}
 
 	err := json.Unmarshal([]byte(jsonData), output)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
-	if output.Data != nil {
+	if len(output.Data) != 0 {
 		t.Errorf("Expected nil data, got %v", output.Data)
 	}
 }
@@ -282,7 +347,6 @@ func TestInferOutput_UnmarshalJSON_MissingDataField(t *testing.T) {
 func TestInferOutput_UnmarshalJSON_MissingShapeField(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mockDataConverter := mocks.NewMockDataConverter(mockController)
 
 	jsonData := `{
 		"name": "output_name",
@@ -292,10 +356,7 @@ func TestInferOutput_UnmarshalJSON_MissingShapeField(t *testing.T) {
 	}`
 	output := &InferOutput{
 		BaseInferOutput: &base.BaseInferOutput{},
-		DataConverter:   mockDataConverter,
 	}
-
-	mockDataConverter.EXPECT().ConvertInterfaceSliceToInt32SliceAsInterface(gomock.Any()).Return([]interface{}{1, 2})
 
 	err := json.Unmarshal([]byte(jsonData), output)
 	if err != nil {
@@ -309,7 +370,6 @@ func TestInferOutput_UnmarshalJSON_MissingShapeField(t *testing.T) {
 func TestInferOutput_UnmarshalJSON_MissingNameField(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mockDataConverter := mocks.NewMockDataConverter(mockController)
 
 	jsonData := `{
 		"shape": [2],
@@ -319,10 +379,7 @@ func TestInferOutput_UnmarshalJSON_MissingNameField(t *testing.T) {
 	}`
 	output := &InferOutput{
 		BaseInferOutput: &base.BaseInferOutput{},
-		DataConverter:   mockDataConverter,
 	}
-
-	mockDataConverter.EXPECT().ConvertInterfaceSliceToInt32SliceAsInterface(gomock.Any()).Return([]interface{}{1, 2})
 
 	err := json.Unmarshal([]byte(jsonData), output)
 	if err != nil {
@@ -336,7 +393,6 @@ func TestInferOutput_UnmarshalJSON_MissingNameField(t *testing.T) {
 func TestInferOutput_UnmarshalJSON_MissingDatatypeField(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	mockDataConverter := mocks.NewMockDataConverter(mockController)
 
 	jsonData := `{
 		"name": "output_name",
@@ -346,7 +402,6 @@ func TestInferOutput_UnmarshalJSON_MissingDatatypeField(t *testing.T) {
 	}`
 	output := &InferOutput{
 		BaseInferOutput: &base.BaseInferOutput{},
-		DataConverter:   mockDataConverter,
 	}
 
 	err := json.Unmarshal([]byte(jsonData), output)
@@ -356,7 +411,7 @@ func TestInferOutput_UnmarshalJSON_MissingDatatypeField(t *testing.T) {
 	if output.Datatype != "" {
 		t.Errorf("Expected empty datatype, got '%s'", output.Datatype)
 	}
-	expectedData := []interface{}{1.0, 2.0}
+	expectedData := []any{1.0, 2.0}
 	if !reflect.DeepEqual(output.Data, expectedData) {
 		t.Errorf("Expected data %v, got %v", expectedData, output.Data)
 	}

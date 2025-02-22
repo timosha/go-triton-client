@@ -32,7 +32,7 @@ type client struct {
 	logger            *log.Logger
 }
 
-// NewClient creates a new HttpInferenceServerClient.
+// NewClient creates a new httpInferenceServerClient.
 func NewClient(url string, verbose bool, connectionTimeout float64, networkTimeout float64, ssl bool, insecure bool, httpClient *http.Client, logger *log.Logger) (base.Client, error) {
 	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
 		return nil, fmt.Errorf("url should not include the scheme")
@@ -70,7 +70,6 @@ func NewClient(url string, verbose bool, connectionTimeout float64, networkTimeo
 	}, nil
 }
 
-// IsServerLive checks if the server is live.
 func (c *client) IsServerLive(ctx context.Context, options *options.Options) (bool, error) {
 	resp, err := c.httpClient.Get(c.baseURL, "v2/health/live", options.Headers, options.QueryParams)
 	if err != nil {
@@ -81,7 +80,6 @@ func (c *client) IsServerLive(ctx context.Context, options *options.Options) (bo
 	return resp.StatusCode == http.StatusOK, nil
 }
 
-// IsServerReady checks if the server is ready.
 func (c *client) IsServerReady(ctx context.Context, options *options.Options) (bool, error) {
 	resp, err := c.httpClient.Get(c.baseURL, "v2/health/ready", options.Headers, options.QueryParams)
 	if err != nil {
@@ -92,7 +90,6 @@ func (c *client) IsServerReady(ctx context.Context, options *options.Options) (b
 	return resp.StatusCode == http.StatusOK, nil
 }
 
-// IsModelReady checks if the specified model is ready.
 func (c *client) IsModelReady(ctx context.Context, modelName string, modelVersion string, options *options.Options) (bool, error) {
 	requestURI := fmt.Sprintf("v2/models/%s/ready", url.QueryEscape(modelName))
 	if modelVersion != "" {
@@ -108,7 +105,6 @@ func (c *client) IsModelReady(ctx context.Context, modelName string, modelVersio
 	return resp.StatusCode == http.StatusOK, nil
 }
 
-// GetServerMetadata retrieves server metadata.
 func (c *client) GetServerMetadata(ctx context.Context, options *options.Options) (*models.ServerMetadataResponse, error) {
 	resp, err := c.httpClient.Get(c.baseURL, "v2", options.Headers, options.QueryParams)
 	if err != nil {
@@ -132,7 +128,6 @@ func (c *client) GetServerMetadata(ctx context.Context, options *options.Options
 	return &response, nil
 }
 
-// GetModelMetadata retrieves metadata for a specific model.
 func (c *client) GetModelMetadata(ctx context.Context, modelName string, modelVersion string, options *options.Options) (*models.ModelMetadataResponse, error) {
 	requestURI := fmt.Sprintf("v2/models/%s", url.QueryEscape(modelName))
 	if modelVersion != "" {
@@ -161,7 +156,6 @@ func (c *client) GetModelMetadata(ctx context.Context, modelName string, modelVe
 	return &response, nil
 }
 
-// GetModelConfig retrieves the configuration for a specific model.
 func (c *client) GetModelConfig(ctx context.Context, modelName string, modelVersion string, options *options.Options) (*models.ModelConfigResponse, error) {
 	requestURI := fmt.Sprintf("v2/models/%s/config", url.QueryEscape(modelName))
 	if modelVersion != "" {
@@ -190,7 +184,6 @@ func (c *client) GetModelConfig(ctx context.Context, modelName string, modelVers
 	return &response, nil
 }
 
-// GetModelRepositoryIndex retrieves the index of the model repository.
 func (c *client) GetModelRepositoryIndex(ctx context.Context, options *options.Options) ([]models.ModelRepositoryIndexResponse, error) {
 	resp, err := c.httpClient.Post(c.baseURL, "v2/repository/index", "", options.Headers, options.QueryParams)
 	if err != nil {
@@ -214,12 +207,11 @@ func (c *client) GetModelRepositoryIndex(ctx context.Context, options *options.O
 	return response, nil
 }
 
-// LoadModel loads a model into the server.
 func (c *client) LoadModel(ctx context.Context, modelName string, config string, files map[string][]byte, options *options.Options) error {
 	requestURI := fmt.Sprintf("v2/repository/models/%s/load", url.QueryEscape(modelName))
 
-	loadRequest := make(map[string]interface{})
-	parameters := make(map[string]interface{})
+	loadRequest := make(map[string]any)
+	parameters := make(map[string]any)
 
 	if config != "" {
 		parameters["config"] = config
@@ -257,12 +249,11 @@ func (c *client) LoadModel(ctx context.Context, modelName string, config string,
 	return nil
 }
 
-// UnloadModel unloads a model from the server.
 func (c *client) UnloadModel(ctx context.Context, modelName string, unloadDependents bool, options *options.Options) error {
 	requestURI := fmt.Sprintf("v2/repository/models/%s/unload", url.QueryEscape(modelName))
 
-	unloadRequest := map[string]interface{}{
-		"parameters": map[string]interface{}{
+	unloadRequest := map[string]any{
+		"parameters": map[string]any{
 			"unload_dependents": unloadDependents,
 		},
 	}
@@ -289,7 +280,6 @@ func (c *client) UnloadModel(ctx context.Context, modelName string, unloadDepend
 	return nil
 }
 
-// GetInferenceStatistics retrieves inference statistics for a model.
 func (c *client) GetInferenceStatistics(ctx context.Context, modelName string, modelVersion string, options *options.Options) (*models.InferenceStatisticsResponse, error) {
 	requestURI := fmt.Sprintf("v2/models/%s/stats", url.QueryEscape(modelName))
 	if modelVersion != "" {
@@ -318,7 +308,6 @@ func (c *client) GetInferenceStatistics(ctx context.Context, modelName string, m
 	return &response, nil
 }
 
-// GetTraceSettings retrieves trace settings for a model or the server.
 func (c *client) GetTraceSettings(ctx context.Context, modelName string, options *options.Options) (*models.TraceSettingsResponse, error) {
 	requestURI := "v2/trace/setting"
 	if modelName != "" {
@@ -347,7 +336,6 @@ func (c *client) GetTraceSettings(ctx context.Context, modelName string, options
 	return &response, nil
 }
 
-// UpdateLogSettings updates the log settings of the server.
 func (c *client) UpdateLogSettings(ctx context.Context, request models.LogSettingsRequest, options *options.Options) error {
 	requestBody, err := c.marshaller.Marshal(request)
 	if err != nil {
@@ -371,7 +359,6 @@ func (c *client) UpdateLogSettings(ctx context.Context, request models.LogSettin
 	return nil
 }
 
-// GetLogSettings retrieves the log settings of the server.
 func (c *client) GetLogSettings(ctx context.Context, options *options.Options) (*models.LogSettingsResponse, error) {
 	resp, err := c.httpClient.Get(c.baseURL, "v2/logging", options.Headers, options.QueryParams)
 	if err != nil {
@@ -395,7 +382,6 @@ func (c *client) GetLogSettings(ctx context.Context, options *options.Options) (
 	return &response, nil
 }
 
-// GetSystemSharedMemoryStatus retrieves the status of the system shared memory.
 func (c *client) GetSystemSharedMemoryStatus(ctx context.Context, regionName string, options *options.Options) ([]models.SystemSharedMemoryStatusResponse, error) {
 	requestURI := "v2/systemsharedmemory/status"
 	if regionName != "" {
@@ -424,11 +410,10 @@ func (c *client) GetSystemSharedMemoryStatus(ctx context.Context, regionName str
 	return response, nil
 }
 
-// RegisterSystemSharedMemory registers a region of system shared memory.
 func (c *client) RegisterSystemSharedMemory(ctx context.Context, name string, key string, byteSize int, offset int, options *options.Options) error {
 	requestURI := fmt.Sprintf("v2/systemsharedmemory/region/%s/register", url.QueryEscape(name))
 
-	registerRequest := map[string]interface{}{
+	registerRequest := map[string]any{
 		"key":       key,
 		"offset":    offset,
 		"byte_size": byteSize,
@@ -455,7 +440,6 @@ func (c *client) RegisterSystemSharedMemory(ctx context.Context, name string, ke
 	return nil
 }
 
-// UnregisterSystemSharedMemory unregisters a region of system shared memory.
 func (c *client) UnregisterSystemSharedMemory(ctx context.Context, name string, options *options.Options) error {
 	requestURI := "v2/systemsharedmemory/unregister"
 	if name != "" {
@@ -483,7 +467,6 @@ func (c *client) UnregisterSystemSharedMemory(ctx context.Context, name string, 
 	return nil
 }
 
-// GetCUDASharedMemoryStatus retrieves the status of the CUDA shared memory.
 func (c *client) GetCUDASharedMemoryStatus(ctx context.Context, regionName string, options *options.Options) ([]models.CUDASharedMemoryStatusResponse, error) {
 	requestURI := "v2/cudasharedmemory/status"
 	if regionName != "" {
@@ -512,13 +495,12 @@ func (c *client) GetCUDASharedMemoryStatus(ctx context.Context, regionName strin
 	return response, nil
 }
 
-// RegisterCUDASharedMemory registers a region of CUDA shared memory.
 func (c *client) RegisterCUDASharedMemory(ctx context.Context, name string, rawHandle []byte, deviceID int, byteSize int, options *options.Options) error {
 	requestURI := fmt.Sprintf("v2/cudasharedmemory/region/%s/register", url.QueryEscape(name))
 
 	rawHandleBase64 := base64.StdEncoding.EncodeToString(rawHandle)
 
-	registerRequest := map[string]interface{}{
+	registerRequest := map[string]any{
 		"raw_handle": map[string]string{"b64": rawHandleBase64},
 		"device_id":  deviceID,
 		"byte_size":  byteSize,
@@ -545,7 +527,6 @@ func (c *client) RegisterCUDASharedMemory(ctx context.Context, name string, rawH
 	return nil
 }
 
-// UnregisterCUDASharedMemory unregisters a region of CUDA shared memory.
 func (c *client) UnregisterCUDASharedMemory(ctx context.Context, name string, options *options.Options) error {
 	requestURI := "v2/cudasharedmemory/unregister"
 	if name != "" {
@@ -573,7 +554,6 @@ func (c *client) UnregisterCUDASharedMemory(ctx context.Context, name string, op
 	return nil
 }
 
-// Infer sends an inference request to the server.
 func (c *client) Infer(
 	ctx context.Context,
 	modelName string,

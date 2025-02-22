@@ -7,17 +7,29 @@ import (
 
 // InferInput is an interface that defines methods for model inference inputs.
 type InferInput interface {
+	// GetName returns the name of the input tensor.
 	GetName() string
+	// GetShape returns the shape of the input tensor.
 	GetShape() []int64
+	// GetDatatype returns the data type of the input tensor.
 	GetDatatype() string
-	GetParameters() map[string]interface{}
-	GetData() []interface{}
+	// GetParameters returns the parameters associated with the input tensor.
+	GetParameters() map[string]any
+	// GetData returns the data of the input tensor.
+	GetData() []any
+	// GetRawData returns the raw binary data of the input tensor.
 	GetRawData() []byte
+	// GetTensor constructs the tensor representation suitable for the HTTP/gRPC inference request.
 	GetTensor() any
 	GetBinaryData() []byte
+	// SetDatatype sets the datatype of the input tensor.
 	SetDatatype(datatype string)
+	// SetShape sets the shape of the input tensor.
 	SetShape(shape []int64)
-	SetData(inputTensor interface{}, binaryData bool) error
+	// SetData sets the data for the input tensor.
+	// If binaryData is true, it serializes the inputTensor and stores it as RawData.
+	// If binaryData is false, it flattens the inputTensor and stores it as Data.
+	SetData(inputTensor any, binaryData bool) error
 }
 
 // BaseInferInput is a base struct that implements common functionality for InferInput.
@@ -25,58 +37,47 @@ type BaseInferInput struct {
 	Name          string
 	Shape         []int64
 	Datatype      string
-	Parameters    map[string]interface{}
-	Data          []interface{}
+	Parameters    map[string]any
+	Data          []any
 	RawData       []byte
 	DataConverter converter.DataConverter
 }
 
-// GetName returns the name of the input tensor.
 func (input *BaseInferInput) GetName() string {
 	return input.Name
 }
 
-// GetShape returns the shape of the input tensor.
 func (input *BaseInferInput) GetShape() []int64 {
 	return input.Shape
 }
 
-// GetDatatype returns the data type of the input tensor.
 func (input *BaseInferInput) GetDatatype() string {
 	return input.Datatype
 }
 
-// GetParameters returns the parameters associated with the input tensor.
-func (input *BaseInferInput) GetParameters() map[string]interface{} {
+func (input *BaseInferInput) GetParameters() map[string]any {
 	return input.Parameters
 }
 
-// GetData returns the data of the input tensor.
-func (input *BaseInferInput) GetData() []interface{} {
+func (input *BaseInferInput) GetData() []any {
 	return input.Data
 }
 
-// GetRawData returns the raw binary data of the input tensor.
 func (input *BaseInferInput) GetRawData() []byte {
 	return input.RawData
 }
 
-// SetDatatype sets the datatype of the input tensor.
 func (input *BaseInferInput) SetDatatype(datatype string) {
 	input.Datatype = datatype
 }
 
-// SetShape sets the shape of the input tensor.
 func (input *BaseInferInput) SetShape(shape []int64) {
 	input.Shape = shape
 }
 
-// SetData sets the data for the input tensor.
-// If binaryData is true, it serializes the inputTensor and stores it as RawData.
-// If binaryData is false, it flattens the inputTensor and stores it as Data.
-func (input *BaseInferInput) SetData(inputTensor interface{}, binaryData bool) error {
+func (input *BaseInferInput) SetData(inputTensor any, binaryData bool) error {
 	// Validate the input tensor type matches the expected datatype
-	if input.Datatype != getDatatype(inputTensor) {
+	if input.Datatype != GetDatatype(inputTensor) {
 		return fmt.Errorf("got unexpected datatype %T from input tensor, expected %s", inputTensor, input.Datatype)
 	}
 
@@ -99,11 +100,13 @@ func (input *BaseInferInput) SetData(inputTensor interface{}, binaryData bool) e
 	return nil
 }
 
-// getDatatype determines the data type of the input tensor based on its Go type.
-func getDatatype(inputTensor interface{}) string {
+// GetDatatype determines the data type of the input tensor based on its Go type.
+func GetDatatype(inputTensor any) string {
 	switch inputTensor.(type) {
-	case []int:
-		return "INT64"
+	case []int8:
+		return "INT8"
+	case []int16:
+		return "INT16"
 	case []int32:
 		return "INT32"
 	case []int64:

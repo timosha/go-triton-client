@@ -6,7 +6,7 @@ import (
 	"compress/zlib"
 	"errors"
 	"github.com/Trendyol/go-triton-client/mocks"
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"strconv"
 	"testing"
 )
@@ -120,7 +120,7 @@ func TestNewInferResult_InvalidContentEncoding(t *testing.T) {
 	}
 }
 
-func TestInferResult_AsSlice_HasBinaryData(t *testing.T) {
+func TestInferResult_AsFloat32Slice_HasBinaryData(t *testing.T) {
 	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"FP32","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -129,10 +129,9 @@ func TestInferResult_AsSlice_HasBinaryData(t *testing.T) {
 	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
 	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, 16)...), nil)
 	mockDataConverter := mocks.NewMockDataConverter(mockController)
-	mockDataConverter.EXPECT().DeserializeTensor(gomock.Any(), gomock.Any()).Return([]float32{1, 2}, nil)
-	mockDataConverter.EXPECT().ReshapeArray(gomock.Any(), gomock.Any()).Return([]interface{}{1, 2}, nil)
+	mockDataConverter.EXPECT().DeserializeFloat32Tensor(gomock.Any()).Return([]float32{1, 2}, nil)
 	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
-	data, err := result.AsSlice("output0")
+	data, err := result.AsFloat32Slice("output0")
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -141,7 +140,247 @@ func TestInferResult_AsSlice_HasBinaryData(t *testing.T) {
 	}
 }
 
-func TestInferResult_AsSlice_NoBinaryData(t *testing.T) {
+func TestInferResult_AsFloat16Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"FP16","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, 16)...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeFloat16Tensor(gomock.Any()).Return([]float64{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsFloat16Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsFloat64Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"FP64","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, 16)...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeFloat64Tensor(gomock.Any()).Return([]float64{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsFloat64Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsInt8Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"INT8","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, int8(16))...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeInt8Tensor(gomock.Any()).Return([]int8{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsInt8Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsInt16Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"INT16","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, int16(16))...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeInt16Tensor(gomock.Any()).Return([]int16{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsInt16Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsInt32Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"INT32","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, int32(16))...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeInt32Tensor(gomock.Any()).Return([]int32{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsInt32Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsInt64Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"INT64","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, int64(16))...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeInt64Tensor(gomock.Any()).Return([]int64{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsInt64Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsUint8Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"UINT8","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, uint8(16))...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeUint8Tensor(gomock.Any()).Return([]uint8{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsUint8Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsUint16Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"UINT16","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, uint16(16))...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeUint16Tensor(gomock.Any()).Return([]uint16{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsUint16Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsUint32Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"UINT32","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, uint32(16))...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeUint32Tensor(gomock.Any()).Return([]uint32{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsUint32Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsUint64Slice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"UINT64","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, uint64(16))...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeUint64Tensor(gomock.Any()).Return([]uint64{1, 2}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsUint64Slice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsBoolSlice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"BOOL","shape":[2,2],"parameters":{"binary_data_size":1}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, 1)...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeBoolTensor(gomock.Any()).Return([]bool{true}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsBoolSlice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsByteSlice_HasBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"BYTES","shape":[2,2],"parameters":{"binary_data_size":16}}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, 16)...), nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	mockDataConverter.EXPECT().DeserializeBytesTensor(gomock.Any()).Return([]string{""}, nil)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsByteSlice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if data == nil {
+		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsFloat32Slice_NoBinaryData(t *testing.T) {
 	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"FP32","shape":[2,2],"data":[1.0,2.0,3.0,4.0]}]}`)
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -150,14 +389,32 @@ func TestInferResult_AsSlice_NoBinaryData(t *testing.T) {
 	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
 	mockResponseWrapper.EXPECT().GetBody().Return(body, nil)
 	mockDataConverter := mocks.NewMockDataConverter(mockController)
-	mockDataConverter.EXPECT().ReshapeArray(gomock.Any(), gomock.Any()).Return([]interface{}{1, 2}, nil)
 	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
-	data, err := result.AsSlice("output0")
+	data, err := result.AsFloat32Slice("output0")
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 	if data == nil {
 		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsFloat32Slice_NoBinaryData_ConvertError(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"FP32","shape":[2,2],"data":[1.0,2.0,3.0,4.0]}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return("")
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(body, nil)
+	mockDataConverter := mocks.NewMockDataConverter(mockController)
+	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
+	data, err := result.AsFloat64Slice("output0")
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+	if data != nil {
+		t.Errorf("Expected nil, got data %v", data)
 	}
 }
 
@@ -186,28 +443,11 @@ func TestInferResult_AsSlice_DeserializeError(t *testing.T) {
 	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
 	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, 16)...), nil)
 	mockDataConverter := mocks.NewMockDataConverter(mockController)
-	mockDataConverter.EXPECT().DeserializeTensor(gomock.Any(), gomock.Any()).Return(nil, errors.New("deserialize error"))
+	mockDataConverter.EXPECT().DeserializeFloat32Tensor(gomock.Any()).Return(nil, errors.New("deserialize error"))
 	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
-	_, err := result.AsSlice("output0")
+	_, err := result.AsFloat32Slice("output0")
 	if err == nil || err.Error() != "deserialize error" {
 		t.Errorf("Expected error 'deserialize error', got %v", err)
-	}
-}
-
-func TestInferResult_AsSlice_ReshapeError(t *testing.T) {
-	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"FP32","shape":[2,2],"data":[1.0,2.0,3.0,4.0]}]}`)
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
-	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return("")
-	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
-	mockResponseWrapper.EXPECT().GetBody().Return(body, nil)
-	mockDataConverter := mocks.NewMockDataConverter(mockController)
-	mockDataConverter.EXPECT().ReshapeArray(gomock.Any(), gomock.Any()).Return(nil, errors.New("reshape error"))
-	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
-	_, err := result.AsSlice("output0")
-	if err == nil || err.Error() != "reshape error" {
-		t.Errorf("Expected error 'reshape error', got %v", err)
 	}
 }
 
@@ -221,7 +461,7 @@ func TestInferResult_AsSlice_NotFound(t *testing.T) {
 	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, 16)...), nil)
 	mockDataConverter := mocks.NewMockDataConverter(mockController)
 	result, _ := NewInferResult(mockResponseWrapper, mockDataConverter, true)
-	_, err := result.AsSlice("output1")
+	_, err := result.AsFloat32Slice("output1")
 	if err == nil || err.Error() != "output output1 not found" {
 		t.Errorf("Expected error 'output output1 not found', got %v", err)
 	}

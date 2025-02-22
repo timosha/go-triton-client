@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"github.com/x448/float16"
 	"io"
 	"math"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -104,25 +102,6 @@ func serializeStrings(data []string) []byte {
 	return buf.Bytes()
 }
 
-func serializeFloat16(data []float64) []byte {
-	var buf bytes.Buffer
-	for _, v := range data {
-		f16 := float16.Fromfloat32(float32(v))
-		binary.Write(&buf, binary.LittleEndian, f16.Bits())
-	}
-	return buf.Bytes()
-}
-
-func serializeBF16(data []float32) []byte {
-	var buf bytes.Buffer
-	for _, v := range data {
-		bits := math.Float32bits(v)
-		bf16 := uint16(bits >> 16)
-		binary.Write(&buf, binary.LittleEndian, bf16)
-	}
-	return buf.Bytes()
-}
-
 func TestNewDataConverter(t *testing.T) {
 	dc := NewDataConverter()
 	if dc == nil {
@@ -133,7 +112,7 @@ func TestNewDataConverter(t *testing.T) {
 func TestSerializeTensor(t *testing.T) {
 	dc := NewDataConverter()
 	testCases := []struct {
-		input     interface{}
+		input     any
 		expected  []byte
 		expectErr bool
 	}{
@@ -161,47 +140,12 @@ func TestSerializeTensor(t *testing.T) {
 	}
 }
 
-func TestDeserializeTensor(t *testing.T) {
-	dc := NewDataConverter()
-	testCases := []struct {
-		datatype   string
-		dataBuffer []byte
-		expected   interface{}
-		expectErr  bool
-	}{
-		{"BOOL", []byte{1, 0}, []bool{true, false}, false},
-		{"INT8", []byte{0x01, 0x02}, []int8{1, 2}, false},
-		{"INT16", serializeUint16([]uint16{1, 2}), []int16{1, 2}, false},
-		{"INT32", serializeInt32([]int32{1, 2}), []int32{1, 2}, false},
-		{"INT64", serializeInt64([]int64{1, 2}), []int64{1, 2}, false},
-		{"UINT8", []byte{0x01, 0x02}, []uint8{1, 2}, false},
-		{"UINT16", serializeUint16([]uint16{1, 2}), []uint16{1, 2}, false},
-		{"UINT32", serializeUint32([]uint32{1, 2}), []uint32{1, 2}, false},
-		{"UINT64", serializeUint64([]uint64{1, 2}), []uint64{1, 2}, false},
-		{"FP16", serializeFloat16([]float64{1.0, 2.0}), []float64{1.0, 2.0}, false},
-		{"FP32", serializeFloat32([]float32{1.0, 2.0}), []float32{1.0, 2.0}, false},
-		{"FP64", serializeFloat64([]float64{1.0, 2.0}), []float64{1.0, 2.0}, false},
-		{"BYTES", serializeStrings([]string{"hello", "world"}), []string{"hello", "world"}, false},
-		{"BF16", serializeBF16([]float32{1.0, 2.0}), []float32{1.0, 2.0}, false},
-		{"UNSUPPORTED", nil, nil, true},
-	}
-	for _, tc := range testCases {
-		result, err := dc.DeserializeTensor(tc.datatype, tc.dataBuffer)
-		if (err != nil) != tc.expectErr {
-			t.Errorf("DeserializeTensor(%v, %v) unexpected error status: %v", tc.datatype, tc.dataBuffer, err)
-		}
-		if !tc.expectErr && !reflect.DeepEqual(result, tc.expected) {
-			t.Errorf("DeserializeTensor(%v, %v) = %v; want %v", tc.datatype, tc.dataBuffer, result, tc.expected)
-		}
-	}
-}
-
 func TestSerializeTensor_Error(t *testing.T) {
 	dc := &dataConverter{}
 
 	testCases := []struct {
 		description string
-		input       interface{}
+		input       any
 		expected    []byte
 		expectError bool
 		errorMsg    string
@@ -364,20 +308,20 @@ func TestSerializeTensor_Error(t *testing.T) {
 func TestFlattenData(t *testing.T) {
 	dc := NewDataConverter()
 	testCases := []struct {
-		input    interface{}
-		expected []interface{}
+		input    any
+		expected []any
 	}{
-		{[]int{1, 2, 3}, []interface{}{1, 2, 3}},
-		{[]int32{1, 2, 3}, []interface{}{int32(1), int32(2), int32(3)}},
-		{[]int64{1, 2, 3}, []interface{}{int64(1), int64(2), int64(3)}},
-		{[]uint16{1, 2, 3}, []interface{}{uint16(1), uint16(2), uint16(3)}},
-		{[]uint32{1, 2, 3}, []interface{}{uint32(1), uint32(2), uint32(3)}},
-		{[]uint64{1, 2, 3}, []interface{}{uint64(1), uint64(2), uint64(3)}},
-		{[]float32{1.0, 2.0, 3.0}, []interface{}{float32(1.0), float32(2.0), float32(3.0)}},
-		{[]float64{1.0, 2.0, 3.0}, []interface{}{float64(1.0), float64(2.0), float64(3.0)}},
-		{[]byte{0x01, 0x02}, []interface{}{byte(0x01), byte(0x02)}},
-		{[]bool{true, false}, []interface{}{true, false}},
-		{[]string{"hello", "world"}, []interface{}{"hello", "world"}},
+		{[]int{1, 2, 3}, []any{1, 2, 3}},
+		{[]int32{1, 2, 3}, []any{int32(1), int32(2), int32(3)}},
+		{[]int64{1, 2, 3}, []any{int64(1), int64(2), int64(3)}},
+		{[]uint16{1, 2, 3}, []any{uint16(1), uint16(2), uint16(3)}},
+		{[]uint32{1, 2, 3}, []any{uint32(1), uint32(2), uint32(3)}},
+		{[]uint64{1, 2, 3}, []any{uint64(1), uint64(2), uint64(3)}},
+		{[]float32{1.0, 2.0, 3.0}, []any{float32(1.0), float32(2.0), float32(3.0)}},
+		{[]float64{1.0, 2.0, 3.0}, []any{float64(1.0), float64(2.0), float64(3.0)}},
+		{[]byte{0x01, 0x02}, []any{byte(0x01), byte(0x02)}},
+		{[]bool{true, false}, []any{true, false}},
+		{[]string{"hello", "world"}, []any{"hello", "world"}},
 		{[]struct{}{}, nil},
 	}
 	for _, tc := range testCases {
@@ -388,169 +332,182 @@ func TestFlattenData(t *testing.T) {
 	}
 }
 
-func TestReshapeArray(t *testing.T) {
+func TestDeserializeInt8Tensor(t *testing.T) {
 	dc := NewDataConverter()
-	data := []interface{}{1, 2, 3, 4, 5, 6}
-	shape := []int{2, 3}
-	expected := []interface{}{
-		[]interface{}{1, 2, 3},
-		[]interface{}{4, 5, 6},
+	data := []byte{1, 2, 3, 4, 5, 6, 7, 8}
+	expected := []int8{1, 2, 3, 4, 5, 6, 7, 8}
+	result, err := dc.DeserializeInt8Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("DeserializeInt8Tensor(%v) = %v; want %v", data, result, expected)
 	}
-	result, err := dc.ReshapeArray(data, shape)
 	if err != nil {
-		t.Errorf("ReshapeArray(%v, %v) unexpected error: %v", data, shape, err)
-	}
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ReshapeArray(%v, %v) = %v; want %v", data, shape, result, expected)
-	}
-	_, err = dc.ReshapeArray(data, []int{})
-	if err == nil {
-		t.Errorf("Expected error for empty shape")
-	}
-	_, err = dc.ReshapeArray(data, []int{2, 2})
-	if err == nil {
-		t.Errorf("Expected error for size mismatch")
+		t.Errorf("DeserializeInt8Tensor(%v) = %v; want %v", data, err, nil)
 	}
 }
 
-func TestConvertByteSliceToInt32Slice(t *testing.T) {
+func TestDeserializeInt16Tensor(t *testing.T) {
 	dc := NewDataConverter()
-	data := []byte{1, 2, 3, 4}
-	expected := []int32{1, 2, 3, 4}
-	result := dc.ConvertByteSliceToInt32Slice(data)
+	data := []byte{1, 1}
+	expected := []int16{257}
+	result, err := dc.DeserializeInt16Tensor(data)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertByteSliceToInt32Slice(%v) = %v; want %v", data, result, expected)
+		t.Errorf("DeserializeInt16Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeInt16Tensor(%v) = %v; want %v", data, err, nil)
 	}
 }
 
-func TestConvertByteSliceToInt64Slice(t *testing.T) {
+func TestDeserializeInt32Tensor(t *testing.T) {
 	dc := NewDataConverter()
-	data := make([]byte, 16)
-	binary.LittleEndian.PutUint64(data[0:], uint64(1))
-	binary.LittleEndian.PutUint64(data[8:], uint64(2))
-	expected := []int64{1, 2}
-	result := dc.ConvertByteSliceToInt64Slice(data)
+	data := []byte{1, 1, 0, 0}
+	expected := []int32{257}
+	result, err := dc.DeserializeInt32Tensor(data)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertByteSliceToInt64Slice(%v) = %v; want %v", data, result, expected)
+		t.Errorf("DeserializeInt32Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeInt32Tensor(%v) = %v; want %v", data, err, nil)
 	}
 }
 
-func TestConvertByteSliceToFloat32Slice(t *testing.T) {
+func TestDeserializeInt64Tensor(t *testing.T) {
+	dc := NewDataConverter()
+	data := []byte{1, 1, 0, 0, 0, 0, 0, 0}
+	expected := []int64{257}
+	result, err := dc.DeserializeInt64Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("DeserializeInt64Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeInt64Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestDeserializeUint8Tensor(t *testing.T) {
+	dc := NewDataConverter()
+	data := []byte{1, 2, 3, 4, 5, 6, 7, 8}
+	expected := []uint8{1, 2, 3, 4, 5, 6, 7, 8}
+	result, err := dc.DeserializeUint8Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("DeserializeUint8Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeUint8Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestDeserializeUint16Tensor(t *testing.T) {
+	dc := NewDataConverter()
+	data := []byte{1, 1}
+	expected := []uint16{257}
+	result, err := dc.DeserializeUint16Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("DeserializeUint16Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeUint16Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestDeserializeUint32Tensor(t *testing.T) {
+	dc := NewDataConverter()
+	data := []byte{1, 1, 0, 0}
+	expected := []uint32{257}
+	result, err := dc.DeserializeUint32Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("DeserializeUint32Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeUint32Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestDeserializeUint64Tensor(t *testing.T) {
+	dc := NewDataConverter()
+	data := []byte{1, 1, 0, 0, 0, 0, 0, 0}
+	expected := []uint64{257}
+	result, err := dc.DeserializeUint64Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("DeserializeUint64Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeUint64Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestDeserializeFloat16Tensor(t *testing.T) {
+	dc := NewDataConverter()
+	data := []byte{141, 122}
+	expected := []float64{53664}
+	result, err := dc.DeserializeFloat16Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("DeserializeFloat16Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeFloat16Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestDeserializeFloat32Tensor(t *testing.T) {
+	dc := NewDataConverter()
+	data := make([]byte, 4)
+	binary.LittleEndian.PutUint32(data, math.Float32bits(257.0))
+	expected := []float32{257}
+	result, err := dc.DeserializeFloat32Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("DeserializeFloat32Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeFloat32Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestDeserializeBF16Tensor(t *testing.T) {
+	dc := NewDataConverter()
+	data := make([]byte, 4)
+	binary.LittleEndian.PutUint32(data, math.Float32bits(256.0))
+	expected := []float32{0, 256}
+	result, err := dc.DeserializeBF16Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("DeserializeFloat32Tensor(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("DeserializeFloat32Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestDeserializeFloat64Tensor(t *testing.T) {
 	dc := NewDataConverter()
 	data := make([]byte, 8)
-	binary.LittleEndian.PutUint32(data[0:], math.Float32bits(1.0))
-	binary.LittleEndian.PutUint32(data[4:], math.Float32bits(2.0))
-	expected := []float32{1.0, 2.0}
-	result := dc.ConvertByteSliceToFloat32Slice(data)
+	binary.LittleEndian.PutUint64(data, math.Float64bits(257.0))
+	expected := []float64{257}
+	result, err := dc.DeserializeFloat64Tensor(data)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertByteSliceToFloat32Slice(%v) = %v; want %v", data, result, expected)
+		t.Errorf("DeserializeFloat64Tensor(%v) = %v; want %v", data, result, expected)
 	}
-}
-
-func TestConvertByteSliceToFloat64Slice(t *testing.T) {
-	dc := NewDataConverter()
-	data := make([]byte, 16)
-	binary.LittleEndian.PutUint64(data[0:], math.Float64bits(1.0))
-	binary.LittleEndian.PutUint64(data[8:], math.Float64bits(2.0))
-	expected := []float64{1.0, 2.0}
-	result := dc.ConvertByteSliceToFloat64Slice(data)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertByteSliceToFloat64Slice(%v) = %v; want %v", data, result, expected)
-	}
-}
-
-func TestConvertInterfaceSliceToFloat32SliceAsInterface(t *testing.T) {
-	dc := NewDataConverter()
-	data := []interface{}{float64(1.0), float64(2.0)}
-	expected := []interface{}{float32(1.0), float32(2.0)}
-	result := dc.ConvertInterfaceSliceToFloat32SliceAsInterface(data)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertInterfaceSliceToFloat32SliceAsInterface(%v) = %v; want %v", data, result, expected)
-	}
-}
-
-func TestConvertInterfaceSliceToFloat64SliceAsInterface(t *testing.T) {
-	dc := NewDataConverter()
-	data := []interface{}{float64(1.0), float64(2.0)}
-	expected := []interface{}{float64(1.0), float64(2.0)}
-	result := dc.ConvertInterfaceSliceToFloat64SliceAsInterface(data)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertInterfaceSliceToFloat64SliceAsInterface(%v) = %v; want %v", data, result, expected)
-	}
-}
-
-func TestConvertInterfaceSliceToInt32SliceAsInterface(t *testing.T) {
-	dc := NewDataConverter()
-	data := []interface{}{float64(1), float64(2)}
-	expected := []interface{}{int32(1), int32(2)}
-	result := dc.ConvertInterfaceSliceToInt32SliceAsInterface(data)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertInterfaceSliceToInt32SliceAsInterface(%v) = %v; want %v", data, result, expected)
-	}
-}
-
-func TestConvertInterfaceSliceToInt64SliceAsInterface(t *testing.T) {
-	dc := NewDataConverter()
-	data := []interface{}{float64(1), float64(2)}
-	expected := []interface{}{int64(1), int64(2)}
-	result := dc.ConvertInterfaceSliceToInt64SliceAsInterface(data)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertInterfaceSliceToInt64SliceAsInterface(%v) = %v; want %v", data, result, expected)
-	}
-}
-
-func TestConvertInterfaceSliceToUint32SliceAsInterface(t *testing.T) {
-	dc := NewDataConverter()
-	data := []interface{}{float64(1), float64(2)}
-	expected := []interface{}{uint32(1), uint32(2)}
-	result := dc.ConvertInterfaceSliceToUint32SliceAsInterface(data)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertInterfaceSliceToUint32SliceAsInterface(%v) = %v; want %v", data, result, expected)
-	}
-}
-
-func TestConvertInterfaceSliceToUint64SliceAsInterface(t *testing.T) {
-	dc := NewDataConverter()
-	data := []interface{}{float64(1), float64(2)}
-	expected := []interface{}{uint64(1), uint64(2)}
-	result := dc.ConvertInterfaceSliceToUint64SliceAsInterface(data)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertInterfaceSliceToUint64SliceAsInterface(%v) = %v; want %v", data, result, expected)
-	}
-}
-
-func TestConvertInterfaceSliceToBoolSliceAsInterface(t *testing.T) {
-	dc := NewDataConverter()
-	data := []interface{}{true, false}
-	expected := []interface{}{true, false}
-	result := dc.ConvertInterfaceSliceToBoolSliceAsInterface(data)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertInterfaceSliceToBoolSliceAsInterface(%v) = %v; want %v", data, result, expected)
-	}
-}
-
-func TestConvertInterfaceSliceToBytesSliceAsInterface(t *testing.T) {
-	dc := NewDataConverter()
-	data := []interface{}{"hello", "world"}
-	expected := []interface{}{[]byte("hello"), []byte("world")}
-	result, err := dc.ConvertInterfaceSliceToBytesSliceAsInterface(data)
 	if err != nil {
-		t.Errorf("ConvertInterfaceSliceToBytesSliceAsInterface(%v) unexpected error: %v", data, err)
+		t.Errorf("DeserializeFloat64Tensor(%v) = %v; want %v", data, err, nil)
 	}
+}
+
+func TestDeserializeBoolTensor(t *testing.T) {
+	dc := NewDataConverter()
+	data := []byte{1}
+	expected := []bool{true}
+	result, err := dc.DeserializeBoolTensor(data)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("ConvertInterfaceSliceToBytesSliceAsInterface(%v) = %v; want %v", data, result, expected)
+		t.Errorf("DeserializeBoolTensor(%v) = %v; want %v", data, result, expected)
 	}
-	data = []interface{}{"hello", 123}
-	_, err = dc.ConvertInterfaceSliceToBytesSliceAsInterface(data)
-	if err == nil {
-		t.Errorf("Expected error for non-string data")
+	if err != nil {
+		t.Errorf("DeserializeBoolTensor(%v) = %v; want %v", data, err, nil)
 	}
 }
 
 func TestDeserializeBytesTensor(t *testing.T) {
 	dc := dataConverter{}
 	data := serializeStrings([]string{"hello", "world"})
-	result, err := dc.deserializeBytesTensor(data)
+	result, err := dc.DeserializeBytesTensor(data)
 	expected := []string{"hello", "world"}
 	if err != nil {
 		t.Errorf("deserializeBytesTensor(%v) unexpected error: %v", data, err)
@@ -559,68 +516,9 @@ func TestDeserializeBytesTensor(t *testing.T) {
 		t.Errorf("deserializeBytesTensor(%v) = %v; want %v", data, result, expected)
 	}
 	data = []byte{0x05, 0x00, 0x00}
-	_, err = dc.deserializeBytesTensor(data)
+	_, err = dc.DeserializeBytesTensor(data)
 	if err == nil {
 		t.Errorf("Expected error for malformed data")
-	}
-}
-
-func TestReshapeArray_ErrorHandling(t *testing.T) {
-	dc := &dataConverter{}
-
-	testCases := []struct {
-		description string
-		data        interface{}
-		shape       []int
-		expectError bool
-		errorMsg    string
-	}{
-		{
-			description: "Invalid shape with zero dimension",
-			data:        []int{1, 2, 3, 4},
-			shape:       []int{2, 0},
-			expectError: true,
-			errorMsg:    "invalid shape: dimensions must be positive integers",
-		},
-		{
-			description: "Shape not matching data length",
-			data:        []int{1, 2, 3, 4},
-			shape:       []int{2, 2, 2},
-			expectError: true,
-			errorMsg:    "data length does not match shape",
-		},
-		{
-			description: "Data cannot be evenly divided according to the shape",
-			data:        []int{1, 2, 3, 4, 5},
-			shape:       []int{2, 2},
-			expectError: true,
-			errorMsg:    "data cannot be evenly divided according to the shape",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.description, func(t *testing.T) {
-			_, err := dc.ReshapeArray(tc.data, tc.shape)
-			if tc.expectError {
-				if err == nil || !strings.Contains(err.Error(), tc.errorMsg) {
-					t.Errorf("Expected error containing '%v', got '%v'", tc.errorMsg, err)
-				}
-			} else if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-			}
-		})
-	}
-}
-
-func TestReshapeRecursively_EmptyShape(t *testing.T) {
-	dc := &dataConverter{}
-	data := []int{1, 2, 3, 4}
-	rv := reflect.ValueOf(data)
-	shape := []int{}
-
-	_, err := dc.reshapeRecursively(rv, shape)
-	if err == nil || err.Error() != "shape cannot be empty" {
-		t.Errorf("Expected error 'shape cannot be empty', got '%v'", err)
 	}
 }
 
@@ -632,8 +530,232 @@ func TestDeserializeBytesTensor_UnexpectedEnd(t *testing.T) {
 	binary.LittleEndian.PutUint32(buf, length)
 	buf = append(buf, []byte("abc")...)
 
-	_, err := dc.deserializeBytesTensor(buf)
+	_, err := dc.DeserializeBytesTensor(buf)
 	if err == nil || err.Error() != "unexpected end of encoded tensor" {
 		t.Errorf("Expected 'unexpected end of encoded tensor', got '%v'", err)
+	}
+}
+
+func TestConvertByteSliceToInt64Slice(t *testing.T) {
+	dc := NewDataConverter()
+	data := make([]byte, 16)
+	binary.LittleEndian.PutUint64(data[0:], uint64(1))
+	binary.LittleEndian.PutUint64(data[8:], uint64(2))
+	expected := []int64{1, 2}
+	result, err := dc.DeserializeInt64Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertByteSliceToInt64Slice(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("ConvertByteSliceToInt64Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestConvertByteSliceToFloat32Slice(t *testing.T) {
+	dc := NewDataConverter()
+	data := make([]byte, 8)
+	binary.LittleEndian.PutUint32(data[0:], math.Float32bits(1.0))
+	binary.LittleEndian.PutUint32(data[4:], math.Float32bits(2.0))
+	expected := []float32{1.0, 2.0}
+	result, err := dc.DeserializeFloat32Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertByteSliceToFloat32Slice(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("ConvertByteSliceToFloat32Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestConvertByteSliceToFloat64Slice(t *testing.T) {
+	dc := NewDataConverter()
+	data := make([]byte, 16)
+	binary.LittleEndian.PutUint64(data[0:], math.Float64bits(1.0))
+	binary.LittleEndian.PutUint64(data[8:], math.Float64bits(2.0))
+	expected := []float64{1.0, 2.0}
+	result, err := dc.DeserializeFloat64Tensor(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertByteSliceToFloat64Slice(%v) = %v; want %v", data, result, expected)
+	}
+	if err != nil {
+		t.Errorf("ConvertByteSliceToFloat64Tensor(%v) = %v; want %v", data, err, nil)
+	}
+}
+
+func TestConvertInterfaceSliceToFloat32SliceAsInterface(t *testing.T) {
+	dc := NewDataConverter()
+	data := []any{float64(1.0), float64(2.0)}
+	expected := []any{float32(1.0), float32(2.0)}
+	result := dc.ConvertInterfaceSliceToFloat32SliceAsInterface(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertInterfaceSliceToFloat32SliceAsInterface(%v) = %v; want %v", data, result, expected)
+	}
+}
+
+func TestConvertInterfaceSliceToFloat64SliceAsInterface(t *testing.T) {
+	dc := NewDataConverter()
+	data := []any{float64(1.0), float64(2.0)}
+	expected := []any{float64(1.0), float64(2.0)}
+	result := dc.ConvertInterfaceSliceToFloat64SliceAsInterface(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertInterfaceSliceToFloat64SliceAsInterface(%v) = %v; want %v", data, result, expected)
+	}
+}
+
+func TestConvertInterfaceSliceToInt32SliceAsInterface(t *testing.T) {
+	dc := NewDataConverter()
+	data := []any{float64(1), float64(2)}
+	expected := []any{int32(1), int32(2)}
+	result := dc.ConvertInterfaceSliceToInt32SliceAsInterface(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertInterfaceSliceToInt32SliceAsInterface(%v) = %v; want %v", data, result, expected)
+	}
+}
+
+func TestConvertInterfaceSliceToInt64SliceAsInterface(t *testing.T) {
+	dc := NewDataConverter()
+	data := []any{float64(1), float64(2)}
+	expected := []any{int64(1), int64(2)}
+	result := dc.ConvertInterfaceSliceToInt64SliceAsInterface(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertInterfaceSliceToInt64SliceAsInterface(%v) = %v; want %v", data, result, expected)
+	}
+}
+
+func TestConvertInterfaceSliceToUint32SliceAsInterface(t *testing.T) {
+	dc := NewDataConverter()
+	data := []any{float64(1), float64(2)}
+	expected := []any{uint32(1), uint32(2)}
+	result := dc.ConvertInterfaceSliceToUint32SliceAsInterface(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertInterfaceSliceToUint32SliceAsInterface(%v) = %v; want %v", data, result, expected)
+	}
+}
+
+func TestConvertInterfaceSliceToUint64SliceAsInterface(t *testing.T) {
+	dc := NewDataConverter()
+	data := []any{float64(1), float64(2)}
+	expected := []any{uint64(1), uint64(2)}
+	result := dc.ConvertInterfaceSliceToUint64SliceAsInterface(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertInterfaceSliceToUint64SliceAsInterface(%v) = %v; want %v", data, result, expected)
+	}
+}
+
+func TestConvertInterfaceSliceToBoolSliceAsInterface(t *testing.T) {
+	dc := NewDataConverter()
+	data := []any{true, false}
+	expected := []any{true, false}
+	result := dc.ConvertInterfaceSliceToBoolSliceAsInterface(data)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertInterfaceSliceToBoolSliceAsInterface(%v) = %v; want %v", data, result, expected)
+	}
+}
+
+func TestConvertInterfaceSliceToBytesSliceAsInterface(t *testing.T) {
+	dc := NewDataConverter()
+	data := []any{"hello", "world"}
+	expected := []any{[]byte("hello"), []byte("world")}
+	result, err := dc.ConvertInterfaceSliceToBytesSliceAsInterface(data)
+	if err != nil {
+		t.Errorf("ConvertInterfaceSliceToBytesSliceAsInterface(%v) unexpected error: %v", data, err)
+	}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ConvertInterfaceSliceToBytesSliceAsInterface(%v) = %v; want %v", data, result, expected)
+	}
+	data = []any{"hello", 123}
+	_, err = dc.ConvertInterfaceSliceToBytesSliceAsInterface(data)
+	if err == nil {
+		t.Errorf("Expected error for non-string data")
+	}
+}
+
+func TestReshape1D(t *testing.T) {
+	data := []int{1, 2, 3, 4, 5}
+	shape := []int64{5}
+	reshaped, err := Reshape1D(data, shape)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !reflect.DeepEqual(reshaped, data) {
+		t.Errorf("expected %v, got %v", data, reshaped)
+	}
+
+	badShape := []int64{2}
+	_, err = Reshape1D(data, badShape)
+	if err == nil {
+		t.Error("expected error for shape with dimensions != 1, got nil")
+	}
+
+	badShape2 := []int64{6}
+	_, err = Reshape1D(data, badShape2)
+	if err == nil {
+		t.Error("expected error for data length mismatch, got nil")
+	}
+}
+
+func TestReshape2D(t *testing.T) {
+	data := []int{1, 2, 3, 4, 5, 6}
+	shape := []int64{2, 3}
+	expected := [][]int{
+		{1, 2, 3},
+		{4, 5, 6},
+	}
+	reshaped, err := Reshape2D(data, shape)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !reflect.DeepEqual(reshaped, expected) {
+		t.Errorf("expected %v, got %v", expected, reshaped)
+	}
+
+	badShape := []int64{3}
+	_, err = Reshape2D(data, badShape)
+	if err == nil {
+		t.Error("expected error for shape with dimensions != 2, got nil")
+	}
+
+	badShape2 := []int64{3, 3}
+	_, err = Reshape2D(data, badShape2)
+	if err == nil {
+		t.Error("expected error for data length mismatch, got nil")
+	}
+}
+
+func TestReshape3D(t *testing.T) {
+	data := []int{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+		10, 11, 12,
+	}
+	shape := []int64{2, 2, 3}
+	expected := [][][]int{
+		{
+			{1, 2, 3},
+			{4, 5, 6},
+		},
+		{
+			{7, 8, 9},
+			{10, 11, 12},
+		},
+	}
+	reshaped, err := Reshape3D(data, shape)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !reflect.DeepEqual(reshaped, expected) {
+		t.Errorf("expected %v, got %v", expected, reshaped)
+	}
+
+	badShape := []int64{2, 3}
+	_, err = Reshape3D(data, badShape)
+	if err == nil {
+		t.Error("expected error for shape with dimensions != 3, got nil")
+	}
+
+	badShape2 := []int64{2, 2, 4}
+	_, err = Reshape3D(data, badShape2)
+	if err == nil {
+		t.Error("expected error for data length mismatch, got nil")
 	}
 }

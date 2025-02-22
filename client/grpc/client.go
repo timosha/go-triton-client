@@ -52,7 +52,6 @@ func NewClient(url string, verbose bool, connectionTimeout float64, networkTimeo
 	}, nil
 }
 
-// IsServerLive checks if the server is live.
 func (c *client) IsServerLive(ctx context.Context, options *options.Options) (bool, error) {
 	resp, err := c.client.ServerLive(ctx, &grpc_generated_v2.ServerLiveRequest{})
 	if err != nil {
@@ -61,7 +60,6 @@ func (c *client) IsServerLive(ctx context.Context, options *options.Options) (bo
 	return resp.Live, nil
 }
 
-// IsServerReady checks if the server is ready.
 func (c *client) IsServerReady(ctx context.Context, options *options.Options) (bool, error) {
 	resp, err := c.client.ServerReady(ctx, &grpc_generated_v2.ServerReadyRequest{})
 	if err != nil {
@@ -70,7 +68,6 @@ func (c *client) IsServerReady(ctx context.Context, options *options.Options) (b
 	return resp.Ready, nil
 }
 
-// IsModelReady checks if the specified model is ready.
 func (c *client) IsModelReady(ctx context.Context, modelName, modelVersion string, options *options.Options) (bool, error) {
 	resp, err := c.client.ModelReady(ctx, &grpc_generated_v2.ModelReadyRequest{
 		Name:    modelName,
@@ -82,7 +79,6 @@ func (c *client) IsModelReady(ctx context.Context, modelName, modelVersion strin
 	return resp.Ready, nil
 }
 
-// GetServerMetadata retrieves server metadata.
 func (c *client) GetServerMetadata(ctx context.Context, options *options.Options) (*models.ServerMetadataResponse, error) {
 	resp, err := c.client.ServerMetadata(ctx, &grpc_generated_v2.ServerMetadataRequest{})
 	if err != nil {
@@ -102,7 +98,6 @@ func (c *client) GetServerMetadata(ctx context.Context, options *options.Options
 	return response, nil
 }
 
-// GetModelMetadata retrieves metadata for a specific model.
 func (c *client) GetModelMetadata(ctx context.Context, modelName, modelVersion string, options *options.Options) (*models.ModelMetadataResponse, error) {
 	req := &grpc_generated_v2.ModelMetadataRequest{
 		Name:    modelName,
@@ -155,7 +150,6 @@ func (c *client) GetModelMetadata(ctx context.Context, modelName, modelVersion s
 	return modelMetadata, nil
 }
 
-// GetModelConfig retrieves the configuration for a specific model.
 func (c *client) GetModelConfig(ctx context.Context, modelName, modelVersion string, options *options.Options) (*models.ModelConfigResponse, error) {
 	req := &grpc_generated_v2.ModelConfigRequest{
 		Name:    modelName,
@@ -234,7 +228,6 @@ func (c *client) GetModelConfig(ctx context.Context, modelName, modelVersion str
 	return configResponse, nil
 }
 
-// GetModelRepositoryIndex retrieves the index of the model repository.
 func (c *client) GetModelRepositoryIndex(ctx context.Context, options *options.Options) ([]models.ModelRepositoryIndexResponse, error) {
 	req := &grpc_generated_v2.RepositoryIndexRequest{}
 
@@ -260,7 +253,6 @@ func (c *client) GetModelRepositoryIndex(ctx context.Context, options *options.O
 	return index, nil
 }
 
-// LoadModel loads a model into the server.
 func (c *client) LoadModel(ctx context.Context, modelName string, config string, files map[string][]byte, options *options.Options) error {
 	loadRequest := &grpc_generated_v2.RepositoryModelLoadRequest{
 		ModelName:  modelName,
@@ -295,7 +287,6 @@ func (c *client) LoadModel(ctx context.Context, modelName string, config string,
 	return nil
 }
 
-// UnloadModel unloads a model from the server.
 func (c *client) UnloadModel(ctx context.Context, modelName string, unloadDependents bool, options *options.Options) error {
 	unloadRequest := &grpc_generated_v2.RepositoryModelUnloadRequest{
 		ModelName:  modelName,
@@ -320,7 +311,6 @@ func (c *client) UnloadModel(ctx context.Context, modelName string, unloadDepend
 	return nil
 }
 
-// GetInferenceStatistics retrieves inference statistics for a model.
 func (c *client) GetInferenceStatistics(ctx context.Context, modelName, modelVersion string, options *options.Options) (*models.InferenceStatisticsResponse, error) {
 	req := &grpc_generated_v2.ModelStatisticsRequest{
 		Name:    modelName,
@@ -367,7 +357,6 @@ func (c *client) GetInferenceStatistics(ctx context.Context, modelName, modelVer
 	return inferenceStatsResponse, nil
 }
 
-// GetTraceSettings retrieves trace settings for a model or the server.
 func (c *client) GetTraceSettings(ctx context.Context, modelName string, options *options.Options) (*models.TraceSettingsResponse, error) {
 	req := &grpc_generated_v2.TraceSettingRequest{
 		ModelName: modelName,
@@ -410,7 +399,6 @@ func (c *client) GetTraceSettings(ctx context.Context, modelName string, options
 	return traceSettings, nil
 }
 
-// UpdateLogSettings updates the log settings of the server.
 func (c *client) UpdateLogSettings(ctx context.Context, request models.LogSettingsRequest, options *options.Options) error {
 	logSettingsRequest := &grpc_generated_v2.LogSettingsRequest{
 		Settings: make(map[string]*grpc_generated_v2.LogSettingsRequest_SettingValue),
@@ -459,7 +447,6 @@ func (c *client) UpdateLogSettings(ctx context.Context, request models.LogSettin
 	return nil
 }
 
-// GetLogSettings retrieves the log settings of the server.
 func (c *client) GetLogSettings(ctx context.Context, options *options.Options) (*models.LogSettingsResponse, error) {
 	resp, err := c.client.LogSettings(ctx, &grpc_generated_v2.LogSettingsRequest{})
 	if err != nil {
@@ -500,7 +487,6 @@ func (c *client) GetLogSettings(ctx context.Context, options *options.Options) (
 	return logSettings, nil
 }
 
-// GetSystemSharedMemoryStatus retrieves the status of the system shared memory.
 func (c *client) GetSystemSharedMemoryStatus(ctx context.Context, name string, options *options.Options) ([]models.SystemSharedMemoryStatusResponse, error) {
 	req := &grpc_generated_v2.SystemSharedMemoryStatusRequest{
 		Name: name,
@@ -525,7 +511,6 @@ func (c *client) GetSystemSharedMemoryStatus(ctx context.Context, name string, o
 	return status, nil
 }
 
-// RegisterSystemSharedMemory registers a region of system shared memory.
 func (c *client) RegisterSystemSharedMemory(ctx context.Context, name, key string, byteSize, offset int, options *options.Options) error {
 	request := &grpc_generated_v2.SystemSharedMemoryRegisterRequest{
 		Name:     name,
@@ -546,7 +531,6 @@ func (c *client) RegisterSystemSharedMemory(ctx context.Context, name, key strin
 	return nil
 }
 
-// UnregisterSystemSharedMemory unregisters a region of system shared memory.
 func (c *client) UnregisterSystemSharedMemory(ctx context.Context, name string, options *options.Options) error {
 	_, err := c.client.SystemSharedMemoryUnregister(ctx, &grpc_generated_v2.SystemSharedMemoryUnregisterRequest{
 		Name: name,
@@ -562,7 +546,6 @@ func (c *client) UnregisterSystemSharedMemory(ctx context.Context, name string, 
 	return nil
 }
 
-// GetCUDASharedMemoryStatus retrieves the status of the CUDA shared memory.
 func (c *client) GetCUDASharedMemoryStatus(ctx context.Context, name string, options *options.Options) ([]models.CUDASharedMemoryStatusResponse, error) {
 	req := &grpc_generated_v2.CudaSharedMemoryStatusRequest{
 		Name: name,
@@ -589,7 +572,6 @@ func (c *client) GetCUDASharedMemoryStatus(ctx context.Context, name string, opt
 	return status, nil
 }
 
-// RegisterCUDASharedMemory registers a region of CUDA shared memory.
 func (c *client) RegisterCUDASharedMemory(ctx context.Context, name string, rawHandle []byte, deviceID, byteSize int, options *options.Options) error {
 	request := &grpc_generated_v2.CudaSharedMemoryRegisterRequest{
 		Name:      name,
@@ -610,7 +592,6 @@ func (c *client) RegisterCUDASharedMemory(ctx context.Context, name string, rawH
 	return nil
 }
 
-// UnregisterCUDASharedMemory unregisters a region of CUDA shared memory.
 func (c *client) UnregisterCUDASharedMemory(ctx context.Context, name string, options *options.Options) error {
 	_, err := c.client.CudaSharedMemoryUnregister(ctx, &grpc_generated_v2.CudaSharedMemoryUnregisterRequest{
 		Name: name,
@@ -626,7 +607,6 @@ func (c *client) UnregisterCUDASharedMemory(ctx context.Context, name string, op
 	return nil
 }
 
-// Infer sends an inference request to the server.
 func (c *client) Infer(
 	ctx context.Context,
 	modelName string,

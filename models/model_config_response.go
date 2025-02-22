@@ -7,15 +7,15 @@ type ModelConfigResponse struct {
 	VersionPolicy        ModelConfigVersionPolicy             `json:"version_policy"`
 	Input                []ModelConfigInput                   `json:"input"`
 	Output               []ModelConfigOutput                  `json:"output"`
-	BatchInput           []interface{}                        `json:"batch_input"`
-	BatchOutput          []interface{}                        `json:"batch_output"`
+	BatchInput           []any                                `json:"batch_input"`
+	BatchOutput          []any                                `json:"batch_output"`
 	Optimization         ModelConfigOptimization              `json:"optimization"`
 	InstanceGroup        []ModelConfigInstanceGroup           `json:"instance_group"`
 	DefaultModelFileName string                               `json:"default_model_file_name"`
-	CCModelFileNames     interface{}                          `json:"cc_model_file_names"`
-	MetricTags           map[string]interface{}               `json:"metric_tags"`
+	CCModelFileNames     any                                  `json:"cc_model_file_names"`
+	MetricTags           map[string]any                       `json:"metric_tags"`
 	Parameters           map[string]ModelConfigParameterValue `json:"parameters"`
-	ModelWarmup          []interface{}                        `json:"model_warmup"`
+	ModelWarmup          []any                                `json:"model_warmup"`
 }
 
 type ModelConfigVersionPolicy struct {
@@ -62,14 +62,14 @@ type ModelConfigOutputPinnedMemory struct {
 }
 
 type ModelConfigInstanceGroup struct {
-	Name             string        `json:"name"`
-	Kind             string        `json:"kind"`
-	Count            int           `json:"count"`
-	GPUs             []string      `json:"gpus"`
-	SecondaryDevices []string      `json:"secondary_devices"`
-	Profile          []interface{} `json:"profile"`
-	Passive          bool          `json:"passive"`
-	HostPolicy       string        `json:"host_policy"`
+	Name             string   `json:"name"`
+	Kind             string   `json:"kind"`
+	Count            int      `json:"count"`
+	GPUs             []string `json:"gpus"`
+	SecondaryDevices []string `json:"secondary_devices"`
+	Profile          []any    `json:"profile"`
+	Passive          bool     `json:"passive"`
+	HostPolicy       string   `json:"host_policy"`
 }
 
 type ModelConfigParameterValue struct {

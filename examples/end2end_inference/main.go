@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/Trendyol/go-triton-client/converter"
 	"log"
 
 	"github.com/Trendyol/go-triton-client/base"
 	triton "github.com/Trendyol/go-triton-client/client/http"
-	"github.com/Trendyol/go-triton-client/parser"
 	"github.com/Trendyol/go-triton-client/postprocess"
 	"github.com/Trendyol/go-triton-client/tokenizer"
 	tokenizerOptions "github.com/Trendyol/go-triton-client/tokenizer/options"
@@ -18,8 +18,8 @@ func main() {
 	tritonClient, err := triton.NewClient(
 		"localhost:8000", // Triton HTTP endpoint
 		false,            // Verbose logging
-		3000,             // Connection timeout in seconds
-		3000,             // Network timeout in seconds
+		3,                // Connection timeout in seconds
+		3,                // Network timeout in seconds
 		false,            // Use SSL
 		false,            // Insecure connection
 		nil,              // Custom HTTP client (optional)
@@ -42,7 +42,7 @@ func main() {
 	// ---------------------------
 
 	// Initialize the tokenizer for tyBERT
-	tybertTokenizer := tokenizer.NewTokenizer("/tokenizers/ty_bert/tokenizer.json")
+	tybertTokenizer := tokenizer.NewTokenizer("ty_bert/tokenizer.json")
 
 	// Encode the text using the tyBERT tokenizer
 	tybertEncodeResp := tybertTokenizer.Encode(text, encodeOpts)
@@ -79,7 +79,7 @@ func main() {
 
 	// Define the desired output tensors for tyBERT
 	tybertOutputs := []base.InferOutput{
-		triton.NewInferOutput("logits", map[string]interface{}{"binary_data": true}),
+		triton.NewInferOutput("logits", map[string]any{"binary_data": true}),
 	}
 
 	// Perform inference using the tyBERT model
@@ -96,22 +96,25 @@ func main() {
 	}
 
 	// Extract the logits from the response
-	tybertLogitsData, err := tybertResponse.AsSlice("logits")
+	tybertLogitsData, err := tybertResponse.AsFloat16Slice("logits")
 	if err != nil {
 		log.Fatalf("Failed to extract logits from tyBERT response: %v", err)
 	}
+	shape, err := tybertResponse.GetShape("logits")
+	if err != nil {
+		log.Fatalf("Failed to extract shape from response: %v", err)
+	}
 
-	// Parse the logits into a usable format
-	tybertLogits, ok := parser.ParseSlice[[][][]float64](tybertLogitsData)
-	if !ok {
-		log.Fatal("Failed to parse tyBERT inference response")
+	// Reshape the logits
+	tybertReshapedLogits, err := converter.Reshape3D[float64](tybertLogitsData, shape)
+	if err != nil {
+		log.Fatal("Failed to parse inference response")
 	}
 
 	// Post-process the logits (e.g., mean pooling)
 	postProcessMgr := postprocess.NewPostprocessManager()
-	tybertProcessedLogits := postProcessMgr.Float64ToFloat32Slice3D(tybertLogits)
-	tybertMeanPooling, err := postProcessMgr.MeanPoolingFloat32Slice3D(
-		tybertProcessedLogits,
+	tybertMeanPooling, err := postProcessMgr.MeanPoolingFloat64Slice3D(
+		tybertReshapedLogits,
 		[][]int64{convertUint32ToInt64(tybertEncodeResp.AttentionMask)},
 	)
 	if err != nil {
@@ -155,7 +158,7 @@ func main() {
 
 	// Define the desired output tensors for tyRoBERTa
 	tyrobertaOutputs := []base.InferOutput{
-		triton.NewInferOutput("logits", map[string]interface{}{"binary_data": true}),
+		triton.NewInferOutput("logits", map[string]any{"binary_data": true}),
 	}
 
 	// Perform inference using the tyRoBERTa model
@@ -172,21 +175,20 @@ func main() {
 	}
 
 	// Extract the logits from the response
-	tyrobertaLogitsData, err := tyrobertaResponse.AsSlice("logits")
+	tyrobertaLogitsData, err := tyrobertaResponse.AsFloat16Slice("logits")
 	if err != nil {
 		log.Fatalf("Failed to extract logits from tyRoBERTa response: %v", err)
 	}
 
-	// Parse the logits into a usable format
-	tyrobertaLogits, ok := parser.ParseSlice[[][][]float64](tyrobertaLogitsData)
-	if !ok {
-		log.Fatal("Failed to parse tyRoBERTa inference response")
+	// Reshape the logits
+	tyrobertaReshapedLogits, err := converter.Reshape3D[float64](tyrobertaLogitsData, shape)
+	if err != nil {
+		log.Fatal("Failed to parse inference response")
 	}
 
 	// Post-process the logits (e.g., mean pooling)
-	tyrobertaProcessedLogits := postProcessMgr.Float64ToFloat32Slice3D(tyrobertaLogits)
-	tyrobertaMeanPooling, err := postProcessMgr.MeanPoolingFloat32Slice3D(
-		tyrobertaProcessedLogits,
+	tyrobertaMeanPooling, err := postProcessMgr.MeanPoolingFloat64Slice3D(
+		tyrobertaReshapedLogits,
 		[][]int64{convertUint32ToInt64(tyrobertaEncodeResp.AttentionMask)},
 	)
 	if err != nil {

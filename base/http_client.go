@@ -9,8 +9,14 @@ import (
 )
 
 type HttpClient interface {
+	// Get sends a GET request to the specified requestURI with the provided headers and query parameters.
+	// Returns the HTTP response and any error encountered.
 	Get(baseURL, requestURI string, headers map[string]string, queryParams map[string]string) (*http.Response, error)
+	// Post sends a POST request to the specified requestURI with the provided headers, query parameters, and request body.
+	// Returns the HTTP response and any error encountered.
 	Post(baseURL, requestURI string, requestBody string, headers map[string]string, queryParams map[string]string) (*http.Response, error)
+	// PostWithBytes sends a POST request to the specified requestURI with the provided headers, query parameters, and request body as bytes.
+	// Returns the HTTP response and any error encountered.
 	PostWithBytes(baseURL, requestURI string, requestBody []byte, headers, queryParams map[string]string) (*http.Response, error)
 	Do(request *http.Request) (*http.Response, error)
 }
@@ -31,8 +37,6 @@ func NewHttpClient(connectionTimeout float64, insecure bool, client *http.Client
 	return &httpClient{client: client}
 }
 
-// Get sends a GET request to the specified requestURI with the provided headers and query parameters.
-// Returns the HTTP response and any error encountered.
 func (h *httpClient) Get(baseURL, requestURI string, headers map[string]string, queryParams map[string]string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", baseURL, requestURI), nil)
 	if err != nil {
@@ -50,8 +54,6 @@ func (h *httpClient) Get(baseURL, requestURI string, headers map[string]string, 
 	return resp, nil
 }
 
-// Post sends a POST request to the specified requestURI with the provided headers, query parameters, and request body.
-// Returns the HTTP response and any error encountered.
 func (h *httpClient) Post(baseURL, requestURI string, requestBody string, headers map[string]string, queryParams map[string]string) (*http.Response, error) {
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s", baseURL, requestURI), bytes.NewBufferString(requestBody))
 	if err != nil {
@@ -69,8 +71,6 @@ func (h *httpClient) Post(baseURL, requestURI string, requestBody string, header
 	return resp, nil
 }
 
-// PostWithBytes sends a POST request to the specified requestURI with the provided headers, query parameters, and request body as bytes.
-// Returns the HTTP response and any error encountered.
 func (h *httpClient) PostWithBytes(baseURL, requestURI string, requestBody []byte, headers, queryParams map[string]string) (*http.Response, error) {
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s", baseURL, requestURI), bytes.NewBuffer(requestBody))
 	if err != nil {

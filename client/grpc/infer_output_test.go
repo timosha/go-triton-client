@@ -13,7 +13,7 @@ import (
 
 func TestNewInferOutput(t *testing.T) {
 	name := "output0"
-	parameters := map[string]interface{}{"param1": "value1"}
+	parameters := map[string]any{"param1": "value1"}
 	output := NewInferOutput(name, parameters)
 	if output.GetName() != name {
 		t.Errorf("Expected Name %s, got %s", name, output.GetName())
@@ -33,7 +33,7 @@ func TestNewInferOutput_NilParameters(t *testing.T) {
 
 func TestInferOutput_GetTensor(t *testing.T) {
 	name := "output0"
-	parameters := map[string]interface{}{
+	parameters := map[string]any{
 		"param1":      "value1",
 		"param2":      42,
 		"binary_data": true,
@@ -67,7 +67,7 @@ func TestInferOutput_GetTensor(t *testing.T) {
 
 func TestInferOutput_GetTensor_UnsupportedParameterType(t *testing.T) {
 	name := "output0"
-	parameters := map[string]interface{}{
+	parameters := map[string]any{
 		"param1": []int{1, 2, 3},
 	}
 	output := &InferOutput{

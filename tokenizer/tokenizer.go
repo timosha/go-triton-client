@@ -49,6 +49,7 @@ func (t *tokenizer) Encode(text string, encodeOptions *options.EncodeOptions) *m
 	} else {
 		if encodeOptions.ReturnAllAttributes {
 			options = append(options, tokenizers.WithReturnAllAttributes())
+			encodeSpecialTokens = true
 		}
 
 		if encodeOptions.ReturnAttentionMask {

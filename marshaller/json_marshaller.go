@@ -13,6 +13,6 @@ func NewJSONMarshaller() base.Marshaller {
 }
 
 // Marshal serializes the given value into JSON format using the standard json.Marshal.
-func (jm JSONMarshaller) Marshal(v interface{}) ([]byte, error) {
+func (jm JSONMarshaller) Marshal(v any) ([]byte, error) {
 	return json.Marshal(v)
 }

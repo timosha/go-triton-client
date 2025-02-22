@@ -11,8 +11,8 @@ type InferenceStatisticsModelStat struct {
 	InferenceCount int                               `json:"inference_count"`
 	ExecutionCount int                               `json:"execution_count"`
 	InferenceStats InferenceStatisticsInferenceStats `json:"inference_stats"`
-	BatchStats     []interface{}                     `json:"batch_stats"`
-	MemoryUsage    []interface{}                     `json:"memory_usage"`
+	BatchStats     []any                             `json:"batch_stats"`
+	MemoryUsage    []any                             `json:"memory_usage"`
 }
 
 type InferenceStatisticsInferenceStats struct {

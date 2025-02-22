@@ -10,7 +10,7 @@ func TestNewInferInput(t *testing.T) {
 	name := "input0"
 	datatype := "FP32"
 	shape := []int64{1, 3}
-	parameters := map[string]interface{}{"param1": "value1"}
+	parameters := map[string]any{"param1": "value1"}
 	input := NewInferInput(name, datatype, shape, parameters)
 	if input.GetName() != name {
 		t.Errorf("Expected Name %s, got %s", name, input.GetName())
@@ -40,7 +40,7 @@ func TestInferInput_GetTensor(t *testing.T) {
 	name := "input0"
 	datatype := "FP32"
 	shape := []int64{1, 3}
-	parameters := map[string]interface{}{"param1": "value1"}
+	parameters := map[string]any{"param1": "value1"}
 	input := &InferInput{
 		BaseInferInput: &base.BaseInferInput{
 			Name:       name,
@@ -49,7 +49,7 @@ func TestInferInput_GetTensor(t *testing.T) {
 			Parameters: parameters,
 		},
 	}
-	tensor := input.GetTensor().(map[string]interface{})
+	tensor := input.GetTensor().(map[string]any)
 	if tensor["name"] != name {
 		t.Errorf("Expected tensor name %s, got %s", name, tensor["name"])
 	}
@@ -68,19 +68,19 @@ func TestInferInput_GetTensor_WithData(t *testing.T) {
 	name := "input0"
 	datatype := "FP32"
 	shape := []int64{1, 3}
-	inputData := []interface{}{1.0, 2.0, 3.0}
+	inputData := []any{1.0, 2.0, 3.0}
 	input := &InferInput{
 		BaseInferInput: &base.BaseInferInput{
 			Name:     name,
 			Datatype: datatype,
 			Shape:    shape,
 			Data:     inputData,
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"param1": "value1",
 			},
 		},
 	}
-	tensor := input.GetTensor().(map[string]interface{})
+	tensor := input.GetTensor().(map[string]any)
 	if tensor["name"] != name {
 		t.Errorf("Expected tensor name %s, got %s", name, tensor["name"])
 	}
@@ -107,13 +107,13 @@ func TestInferInput_GetTensor_WithSharedMemory(t *testing.T) {
 			Name:     name,
 			Datatype: datatype,
 			Shape:    shape,
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"shared_memory_region": "region0",
 			},
-			Data: []interface{}{1.0, 2.0, 3.0},
+			Data: []any{1.0, 2.0, 3.0},
 		},
 	}
-	tensor := input.GetTensor().(map[string]interface{})
+	tensor := input.GetTensor().(map[string]any)
 	if _, ok := tensor["data"]; ok {
 		t.Errorf("Expected tensor data to be omitted when shared_memory_region is set")
 	}
@@ -129,10 +129,10 @@ func TestInferInput_GetTensor_WithRawData(t *testing.T) {
 			Datatype: datatype,
 			Shape:    shape,
 			RawData:  []byte{1, 2, 3, 4},
-			Data:     []interface{}{1.0, 2.0, 3.0},
+			Data:     []any{1.0, 2.0, 3.0},
 		},
 	}
-	tensor := input.GetTensor().(map[string]interface{})
+	tensor := input.GetTensor().(map[string]any)
 	if _, ok := tensor["data"]; ok {
 		t.Errorf("Expected tensor data to be omitted when RawData is present")
 	}
