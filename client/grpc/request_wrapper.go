@@ -191,7 +191,6 @@ func (w *RequestWrapper) convertInputsToTensors() ([]*grpc_generated_v2.ModelInf
 	for i, input := range w.Inputs {
 		inputTensors[i] = input.GetTensor().(*grpc_generated_v2.ModelInferRequest_InferInputTensor)
 		if rawData := input.GetBinaryData(); rawData != nil {
-			rawInputContents = make([][]byte, 0, len(rawData))
 			rawInputContents = append(rawInputContents, rawData)
 		}
 	}
