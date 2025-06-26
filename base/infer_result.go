@@ -36,6 +36,8 @@ type InferResult interface {
 	AsBoolSlice(name string) ([]bool, error)
 	// AsByteSlice returns the output data as a slice of strings.
 	AsByteSlice(name string) ([]string, error)
+	// AsBytesSlice returns the output data as a slice of []byte.
+	AsBytesSlice(name string) ([][]byte, error)
 }
 
 // BaseInferResult provides common fields and methods for InferResult implementations.

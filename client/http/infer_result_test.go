@@ -5,10 +5,12 @@ import (
 	"compress/gzip"
 	"compress/zlib"
 	"errors"
-	"github.com/Trendyol/go-triton-client/mocks"
-	"go.uber.org/mock/gomock"
 	"strconv"
 	"testing"
+
+	"go.uber.org/mock/gomock"
+
+	"github.com/Trendyol/go-triton-client/mocks"
 )
 
 func TestNewInferResult_NoHeaderLength(t *testing.T) {
@@ -363,6 +365,29 @@ func TestInferResult_AsByteSlice_HasBinaryData(t *testing.T) {
 	}
 	if data == nil {
 		t.Error("Expected data, got nil")
+	}
+}
+
+func TestInferResult_AsBytesSlice_HasNotBinaryData(t *testing.T) {
+	body := []byte(`{"model_name":"test_model","model_version":"1","outputs":[{"name":"output0","datatype":"BYTES","shape":[1],"data":["some data"]}]}`)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockResponseWrapper := mocks.NewMockResponseWrapper(mockController)
+	mockResponseWrapper.EXPECT().GetHeader("Inference-Header-Content-Length").Return(strconv.Itoa(len(body)))
+	mockResponseWrapper.EXPECT().GetHeader("Content-Encoding").Return("")
+	mockResponseWrapper.EXPECT().GetBody().Return(append(body, make([]byte, 16)...), nil)
+
+	result, _ := NewInferResult(mockResponseWrapper, true)
+	data, err := result.AsBytesSlice("output0")
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if len(data) != 1 {
+		t.Error("Expected data len = 1")
+	}
+	expected := []byte("some data")
+	if !bytes.Equal(data[0], expected) {
+		t.Errorf("Expected data[0] == %v, got %v", expected, data[0])
 	}
 }
 

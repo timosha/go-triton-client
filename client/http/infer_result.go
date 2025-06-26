@@ -156,6 +156,10 @@ func (r *InferResult) AsByteSlice(name string) ([]string, error) {
 	return getAsSlice[string](name, r, converter.DeserializeBytesTensor)
 }
 
+func (r *InferResult) AsBytesSlice(name string) ([][]byte, error) {
+	return getAsSlice[[]byte](name, r, converter.DeserializeSliceOfBytesTensor)
+}
+
 func getAsSlice[T any](name string, inferResult *InferResult, deserializer func(buffer []byte) ([]T, error)) ([]T, error) {
 	output, err := inferResult.GetOutput(name)
 	if err != nil {

@@ -270,6 +270,24 @@ func DeserializeBytesTensor(encodedTensor []byte) ([]string, error) {
 	return strs, nil
 }
 
+func DeserializeSliceOfBytesTensor(encodedTensor []byte) ([][]byte, error) {
+	var strs [][]byte
+	offset := 0
+	for offset < len(encodedTensor) {
+		if offset+4 > len(encodedTensor) {
+			return nil, fmt.Errorf("unexpected end of encoded tensor")
+		}
+		length := binary.LittleEndian.Uint32(encodedTensor[offset : offset+4])
+		offset += 4
+		if offset+int(length) > len(encodedTensor) {
+			return nil, fmt.Errorf("unexpected end of encoded tensor")
+		}
+		strs = append(strs, encodedTensor[offset:offset+int(length)])
+		offset += int(length)
+	}
+	return strs, nil
+}
+
 // Helper: deserializeTensorGeneric splits dataBuffer into blocks of blockSize and converts each block using convert.
 func deserializeTensorGeneric[T any](dataBuffer []byte, blockSize int, convert func([]byte) T) []T {
 	n := len(dataBuffer) / blockSize
